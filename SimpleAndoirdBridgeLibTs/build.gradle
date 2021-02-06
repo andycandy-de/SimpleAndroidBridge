@@ -1,0 +1,13 @@
+plugins {
+    id "com.leobia.gradle.jsgradlecompiler" version "0.3.0"
+}
+
+jsOptions {
+    inputPath = file("./src/main/ts/")
+    outputPath = file("./build/js/")
+    compilationLevel = "SIMPLE_OPTIMIZATIONS"
+    jsVersionIn = 'ECMASCRIPT_2020'
+    jsVersionOut = 'ECMASCRIPT_2015'
+    combineAllFiles = false
+    keepSameName = false
+}

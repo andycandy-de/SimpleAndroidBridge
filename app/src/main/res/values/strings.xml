@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">SimpleAndroidBridgeExample</string>
+    <string name="button">PUSH ME</string>
+</resources>
