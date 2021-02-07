@@ -1,4 +1,4 @@
 include ':SimpleAndoirdBridgeLib'
-include ':SimpleAndoirdBridgeLibTs'
+include ':SimpleAndoirdBridgeLibJS'
 include ':app'
 rootProject.name = "SimpleAndroidBridgeExample"
