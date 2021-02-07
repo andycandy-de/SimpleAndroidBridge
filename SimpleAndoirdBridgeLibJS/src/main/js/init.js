@@ -45,7 +45,18 @@ const initBridge = (bridge, interfaces) => {
 
     bridge.interfaces = interfaces
 
+    const prepareCall = (call) => {
+        call.arguments = call.arguments.map((arg) => {
+            if (typeof arg === "function") {
+                return addFunctionBinding(arg)
+            } else {
+                return arg
+            }
+        })
+    }
+
     const callNativeInterface = (call) => {
+        prepareCall(call)
         const callAsString = JSON.stringify(call)
         const answerAsString = bridge.nativeCall(callAsString)
         return JSON.parse(answerAsString)

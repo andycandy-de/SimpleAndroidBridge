@@ -29,18 +29,21 @@ open class JSFunctionParent(val bridge: Bridge, val functionBinding: Long) {
 
 class JSFunction(bridge: Bridge, functionBinding: Long) : JSFunctionParent(bridge, functionBinding) {
     fun call() {
+        checkClosed()
         bridge.callJSFunction(this)
     }
 }
 
 class JSFunctionWithArg<A>(bridge: Bridge, functionBinding: Long) : JSFunctionParent(bridge, functionBinding) {
     fun call(arg: A) {
+        checkClosed()
         bridge.callJSFunction(this, arg)
     }
 }
 /*
 class JSFunctionWithPromise<R>(bridge: Bridge, functionBinding: Long) : JSFunctionParent(bridge, functionBinding) {
     fun call(): Promise<R> {
+        checkClosed()
         return bridge.callJSFunctionWithPromise(this)
     }
 }*/

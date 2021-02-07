@@ -14,6 +14,8 @@ import kotlin.reflect.KFunction
 import kotlin.reflect.KParameter
 import kotlin.reflect.KType
 import kotlin.reflect.KVariance
+import kotlin.reflect.full.isSubclassOf
+import kotlin.reflect.full.isSuperclassOf
 
 class Bridge(private val context: Context, private val webView: WebView, private val name: String = "Bridge") {
 
@@ -137,10 +139,17 @@ class Bridge(private val context: Context, private val webView: WebView, private
         }
     }
 
-    private fun parseFromJson(jsonElement: JsonElement, type: KType) = when {
+    private fun parseFromJson(jsonElement: JsonElement, kType: KType) = when {
+        JSFunctionParent::class.isSuperclassOf(kType.kClass()) -> createJSFunction(jsonElement, kType)
         jsonElement.isJsonNull -> null
-        jsonElement.isJsonPrimitive -> parseJsonPrimitive(jsonElement, type)
-        else -> parseJsonWithType(jsonElement, type)
+        jsonElement.isJsonPrimitive -> parseJsonPrimitive(jsonElement, kType)
+        else -> parseJsonWithType(jsonElement, kType)
+    }
+
+    private fun createJSFunction(jsonElement: JsonElement, kType: KType) = when (kType.kClass()) {
+        JSFunction::class -> JSFunction(this, jsonElement.asLong)
+        JSFunctionWithArg::class -> JSFunctionWithArg<Any?>(this, jsonElement.asLong)
+        else -> error("Unknown function class!")
     }
 
     private fun parseJsonWithType(jsonElement: JsonElement, kType: KType): Any {

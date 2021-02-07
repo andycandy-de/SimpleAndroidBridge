@@ -6,10 +6,15 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.widget.Button
 import androidx.webkit.WebViewAssetLoader
 import de.andycandy.android.bridge.Bridge
+import de.andycandy.android.bridge.JSFunctionWithArg
 
 class MainActivity : AppCompatActivity() {
+
+    var counter = 0;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -19,7 +24,7 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webView)
 
         val bridge = Bridge(applicationContext, webView)
-        bridge.addJSInterface(AndroidNativeInterface())
+        bridge.addJSInterface(AndroidNativeInterface(this))
 
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -37,5 +42,12 @@ class MainActivity : AppCompatActivity() {
         }
 
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
+    }
+
+    fun registerFunctionToButton(function: JSFunctionWithArg<Int>) {
+        findViewById<Button>(R.id.button).setOnClickListener {
+            ++counter
+            function.call(counter)
+        }
     }
 }
