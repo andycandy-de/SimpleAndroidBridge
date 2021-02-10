@@ -2,6 +2,7 @@ const initBridge = (bridge, interfaces) => {
 
     // check preconditions
     if (!bridge) return
+    if (!interfaces) return
     if (bridge.initialized) return
 
     class NativeError extends Error {
@@ -41,6 +42,18 @@ const initBridge = (bridge, interfaces) => {
 
     bridge.getFunctionBinding = () => {
         return Object.keys(functionBindings)
+    }
+    
+    bridge.executeFunctionWithPromiseBinding = (functionBinding, promiseBinding, arg) => {
+        const f = bridge.getFunction(functionBinding)
+        const promise = f(arg)
+        promise.then((ret) => {
+            const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret }
+            bridge.finishPromise(promiseBinding, JSON.stringify(answer))
+        }).catch((err) => {
+            const answer = { hasError: true, error: { message: error.toString(), stackTrace: error.stack } }
+            bridge.finishPromise(promiseBinding, answer)
+        })
     }
 
     bridge.interfaces = interfaces

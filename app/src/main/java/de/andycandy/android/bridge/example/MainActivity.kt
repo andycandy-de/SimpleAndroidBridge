@@ -7,9 +7,12 @@ import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.widget.Button
+import android.widget.Toast
 import androidx.webkit.WebViewAssetLoader
 import de.andycandy.android.bridge.Bridge
 import de.andycandy.android.bridge.JSFunctionWithArg
+import de.andycandy.android.bridge.JSFunctionWithPromise
+import de.andycandy.android.bridge.JSFunctionWithPromiseAndArg
 
 class MainActivity : AppCompatActivity() {
 
@@ -24,7 +27,7 @@ class MainActivity : AppCompatActivity() {
         val webView = findViewById<WebView>(R.id.webView)
 
         val bridge = Bridge(applicationContext, webView)
-        bridge.addJSInterface(AndroidNativeInterface(this))
+        bridge.addJSInterface(AndroidNativeInterface(this@MainActivity))
 
         val assetLoader = WebViewAssetLoader.Builder()
             .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this))
@@ -44,10 +47,30 @@ class MainActivity : AppCompatActivity() {
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
     }
 
-    fun registerFunctionToButton(function: JSFunctionWithArg<Int>) {
+    fun registerFunctionToButton1(function: JSFunctionWithArg<Int>) {
         findViewById<Button>(R.id.button).setOnClickListener {
             ++counter
             function.call(counter)
+        }
+    }
+
+    fun registerFunctionToButton2(function: JSFunctionWithPromise<String>) {
+        findViewById<Button>(R.id.button2).setOnClickListener {
+            function.call().then {
+                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+            }.catch {
+                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_LONG).show() }
+            }
+        }
+    }
+
+    fun registerFunctionToButton3(function: JSFunctionWithPromiseAndArg<Add, String>) {
+        findViewById<Button>(R.id.button3).setOnClickListener {
+            function.call(Add((Math.random() * 10).toInt(), (Math.random() * 10).toInt())).then {
+                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+            }.catch {
+                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_LONG).show() }
+            }
         }
     }
 }
