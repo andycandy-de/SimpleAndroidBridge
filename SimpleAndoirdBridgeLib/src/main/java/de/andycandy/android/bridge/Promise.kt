@@ -1,7 +1,6 @@
 package de.andycandy.android.bridge
 
 import android.util.Log
-import java.util.function.Consumer
 
 class Promise<R> {
 
@@ -10,9 +9,9 @@ class Promise<R> {
     var state = State.PENDING
         private set
 
-    private var thenList: MutableList<Consumer<R>>? = mutableListOf<Consumer<R>>()
+    private var thenList: MutableList<Callable<R>>? = mutableListOf()
 
-    private var catchList: MutableList<Consumer<Throwable>>? = mutableListOf<Consumer<Throwable>>()
+    private var catchList: MutableList<Callable<Throwable>>? = mutableListOf()
 
     private var value: R? = null
 
@@ -28,7 +27,7 @@ class Promise<R> {
             return@synchronized list
         }?.forEach { it ->
             try {
-                it.accept(r)
+                it.call(r)
             } catch (e: Exception) {
                 Log.e("Promise", "Error in then block", e)
             }
@@ -45,7 +44,7 @@ class Promise<R> {
             return@synchronized list
         }?.forEach {
             try {
-                it.accept(e)
+                it.call(e)
             } catch (e: Exception) {
                 Log.e("Promise", "Error in catch block", e)
             }
@@ -57,9 +56,7 @@ class Promise<R> {
 
             when (state) {
                 State.RESOLVED -> block(uncheckedCast(value))
-                State.PENDING -> thenList!!.add( Consumer {
-                    block(it)
-                })
+                State.PENDING -> thenList!!.add( toCallable { block(it) })
                 else -> Unit
             }
         }
@@ -76,9 +73,7 @@ class Promise<R> {
 
             when (state) {
                 State.REJECTED -> block(error!!)
-                State.PENDING -> catchList!!.add( Consumer {
-                    block(it)
-                })
+                State.PENDING -> catchList!!.add( toCallable { block(it) })
                 else -> Unit
             }
         }
@@ -87,6 +82,18 @@ class Promise<R> {
     fun finalize() {
         if (state == State.PENDING) {
             Log.w("Promise", "Promise is not resolved or rejected!")
+        }
+    }
+
+    private interface Callable<T>{
+        fun call(t: T)
+    }
+
+    private fun <T> toCallable (block: (T) -> Unit) : Callable<T> {
+        return object : Callable<T> {
+            override fun call(t: T) {
+                block(t)
+            }
         }
     }
 }
