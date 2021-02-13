@@ -12,15 +12,37 @@ Build a bridge! This library is created to create a powerful interface between A
 
 ✓ Type safety with typescript - Android + Web
 
+## Features
+
+### Share Objects
+
+```
+class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
+
+    @NativeCall(CallType.FULL_SYNC)
+    fun searchContact(contactFilter: ContactFilter): List<Contact> {
+        return contactService.search(contactFilter)
+    }
+}
+
+data class ContactFilter(val surname: String? = null, val firstname: String? = null)
+data class Contact(val surname: String? = null, val fistname: String? = null,
+    val mail: String? = null, val phonenumber: String? = null)
+```
+
+```
+Console.log(Bridge.interfaces.Android.search({surname: "Pitt"}))
+```
+
 ## Setup
 
-Add the libary to your android project.
+### Add the libary to your android project
 
 ```
 implementation 'com.github.andycandy-de:simple-android-bridge:1.0.0-BETA-b01'
 ```
 
-Create your interface.
+### Create a interface
 
 ```
 interface AndroidInterface {
@@ -36,7 +58,7 @@ interface AndroidInterface {
 }
 ```
 
-Add the implementation.
+### Add a implementation class
 
 ```
 class AndroidNativeInterface: DefaultJSInterface("Android"), AndroidInterface {
@@ -55,18 +77,20 @@ class AndroidNativeInterface: DefaultJSInterface("Android"), AndroidInterface {
 }
 ```
 
-Create the bridge and add the interface.
+### Create the bridge and add the interface
 
 ```
 val bridge = Bridge(applicationContext, webView)
-bridge.addJSInterface(AndroidNativeInterface(this@MainActivity))
+bridge.addJSInterface(AndroidNativeInterface())
 ```
 
-Initialize the bridge via web or via android.
+### Initialize the bridge (Javascript or Android)
 
-Android
+Android code
 
 ```
+// Bridge can be initialized by calling the 'init' function inside
+// the 'onPageFinished' function of a WebViewClient
 webView.webViewClient = object : WebViewClient() {
 
     override fun onPageFinished(view: WebView?, url: String?) {
@@ -75,9 +99,12 @@ webView.webViewClient = object : WebViewClient() {
 }
 ```
 
-Web via Javascript
+Javascript code
 
 ```
+// Bridge can be initialized by calling the 'init' function in
+// Javascript. Register function to 'Bridge.afterInitialize' to
+// start the webapp after the webapp is initialized.
 Bridge.init()
 
 Bridge.afterInitialize = () => {
