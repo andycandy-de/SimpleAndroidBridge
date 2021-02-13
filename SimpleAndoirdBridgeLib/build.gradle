@@ -1,5 +1,15 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+    dependencies {
+        classpath 'com.github.panpf.bintray-publish:bintray-publish:1.0.0'
+    }
+}
+
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.github.panpf.bintray-publish'
 
 android {
     compileSdkVersion 30
@@ -55,3 +65,13 @@ task copyInitJS {
 }
 
 build.dependsOn copyInitJS
+
+publish {
+    userOrg = 'andycandy-de'
+    groupId = 'com.github.andycandy-de'
+    artifactId = 'simple-android-bridge'
+    publishVersion = '1.0.0-BETA-b01'
+    desc = 'Library that let you build an awesome android bridge!'
+    licences = ['MIT']
+    website = 'https://github.com/andycandy-de/SimpleAndroidBridge'
+}
