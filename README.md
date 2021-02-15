@@ -19,6 +19,7 @@ Build a bridge! This library is created to create a powerful interface between A
 The javascript bridge which is built in the android sdk just accepts primitive types. That is not enogth? This librabry allows you to share complex objects between web and android. Just define the types as arguments or return in the android native functions. This library automatically converts a javascript object to a kotlin object and vice versa.
 
 ```
+// Kotlin
 class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
 
     @NativeCall(CallType.FULL_SYNC)
@@ -33,7 +34,38 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
 ```
 
 ```
-Console.log(Bridge.interfaces.Android.search({surname: "Pitt"}))
+// Javascript
+console.log(Bridge.interfaces.Android.search({surname: "Pitt"}))
+```
+
+### Share Promise
+
+The javascript bridge which is built in the android sdk executes all functions in a blocking way. The webapp is fully blocked until the native function returns. With this libray you can define a Promise return type. With the 'doInBackground' function the android code is executed in a backgroud thread and the webapp is not blocked.
+
+```
+// Kotlin
+class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
+
+    @NativeCall(CallType.FULL_PROMISE)
+    fun searchContact(contactFilter: ContactFilter): doInBackground<List<Contact>> { promise ->
+        try {
+            promise.resolve(contactService.search(contactFilter))
+        } catch (e: Exception) {
+            promise.reject(e)
+        }
+    }
+}
+
+data class ContactFilter(val surname: String? = null, val firstname: String? = null)
+data class Contact(val surname: String? = null, val fistname: String? = null,
+    val mail: String? = null, val phonenumber: String? = null)
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.search({surname: "Pitt"}).then((list) => {
+    console.log(list);
+});
 ```
 
 ## Setup
@@ -44,36 +76,23 @@ Console.log(Bridge.interfaces.Android.search({surname: "Pitt"}))
 implementation 'com.github.andycandy-de:simple-android-bridge:1.0.0-BETA-b01'
 ```
 
-### Create a interface
+### Create a javscript interface
 
 ```
-interface AndroidInterface {
+class AndroidNativeInterface: DefaultJSInterface("Android") {
 
     @NativeCall(CallType.FULL_SYNC)
-    fun helloFullSync(name: String): String
+    fun helloFullSync(name: String): String {
+        return "hello $name"
+    }
 
     @NativeCall(CallType.WEB_PROMISE)
-    fun helloWebPromise(name: String): String
+    fun helloWebPromise(name: String): String {
+        return "hello $name"
+    }
 
     @NativeCall(CallType.FULL_PROMISE)
-    fun helloFullPromise(name: String): Promise<String>
-}
-```
-
-### Add a implementation class
-
-```
-class AndroidNativeInterface: DefaultJSInterface("Android"), AndroidInterface {
-
-    override fun helloFullSync(name: String): String {
-        return "hello $name"
-    }
-
-    override fun helloWebPromise(name: String): String {
-        return "hello $name"
-    }
-
-    override fun helloFullPromise(name: String) = doInBackground<String> { promise ->
+    fun helloFullPromise(name: String) = doInBackground<String> { promise ->
         promise.resolve("hello $name")
     }
 }
@@ -93,6 +112,7 @@ Android code
 ```
 // Bridge can be initialized by calling the 'init' function inside
 // the 'onPageFinished' function of a WebViewClient
+
 webView.webViewClient = object : WebViewClient() {
 
     override fun onPageFinished(view: WebView?, url: String?) {
@@ -121,6 +141,12 @@ Bridge.init()
 startApp(() => {
     // Start your webapp
 });
+```
+
+### Access the interface in the webapp
+
+```
+console.log(Bridge.interfaces.Android.helloFullSync("Web"))
 ```
 
 ## License
