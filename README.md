@@ -16,6 +16,8 @@ Build a bridge! This library is created to create a powerful interface between A
 
 ### Share Objects
 
+The javascript bridge which is built in the android sdk just accepts primitive types. That is not enogth? This librabry allows you to share complex objects between web and android. Just define the types as arguments or return in the android native functions. This library automatically converts a javascript object to a kotlin object and vice versa.
+
 ```
 class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
 
@@ -104,12 +106,21 @@ Javascript code
 ```
 // Bridge can be initialized by calling the 'init' function in
 // Javascript. Register function to 'Bridge.afterInitialize' to
-// start the webapp after the webapp is initialized.
+// start the webapp after the bridge is initialized.
+
+function startApp(f) {
+    if (Bridge.initialized) {
+        f()
+    } else {
+        Bridge.afterInitialize = f
+    }
+}
+
 Bridge.init()
 
-Bridge.afterInitialize = () => {
+startApp(() => {
     // Start your webapp
-}
+});
 ```
 
 ## License
