@@ -115,11 +115,11 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     }
 
     fun callJSFunction(jsFunctionParent: JSFunctionParent) {
-        executeJavaScript("${name}.getFunction(${jsFunctionParent.functionBinding})()")
+        executeJavaScript("${name}.executeFunction(${jsFunctionParent.functionBinding})")
     }
 
     fun <A> callJSFunction(jsFunctionParent: JSFunctionParent, arg: A) {
-        executeJavaScript("${name}.getFunction(${jsFunctionParent.functionBinding})(${gson.toJson(arg)})")
+        executeJavaScript("${name}.executeFunction(${jsFunctionParent.functionBinding},${gson.toJson(arg)})")
     }
 
     fun <R> callJSFunctionWithPromise(jsFunctionWithPromise: JSFunctionWithPromise<R>): Promise<R> {
@@ -181,7 +181,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
             };
             return ${name}.${function}(call);
         }
-        """.trimIndent().replace("\n", "")
+        """.trimIndent().replace("\n", "").replace(Regex("\\s+"), " ")
     }
 
     private fun createArgList(call: Call, kFunction: KFunction<*>): List<Any?> {

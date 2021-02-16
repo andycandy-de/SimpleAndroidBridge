@@ -44,15 +44,24 @@ const initBridge = (bridge, interfaces) => {
         return Object.keys(functionBindings)
     }
     
+    bridge.executeFunction = (functionBinding, arg) => {
+        const f = bridge.getFunction(functionBinding)
+        setTimeout(() => {
+            f(arg)
+        })
+    }
+    
     bridge.executeFunctionWithPromiseBinding = (functionBinding, promiseBinding, arg) => {
         const f = bridge.getFunction(functionBinding)
-        const promise = f(arg)
-        promise.then((ret) => {
-            const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret }
-            bridge.finishPromise(promiseBinding, JSON.stringify(answer))
-        }).catch((err) => {
-            const answer = { hasError: true, error: { message: error.toString(), stackTrace: error.stack } }
-            bridge.finishPromise(promiseBinding, answer)
+        setTimeout(() => {
+            const promise = f(arg)
+            promise.then((ret) => {
+                const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret }
+                bridge.finishPromise(promiseBinding, JSON.stringify(answer))
+            }).catch((err) => {
+                const answer = { hasError: true, error: { message: error.toString(), stackTrace: error.stack } }
+                bridge.finishPromise(promiseBinding, answer)
+            })
         })
     }
 
@@ -87,11 +96,13 @@ const initBridge = (bridge, interfaces) => {
 
     bridge.nativeCallWebPromise = (call) => {
         return new Promise((resolve, reject) => {
-            try {
-                resolve(bridge.nativeCallFullSync(call))
-            } catch (e) {
-                reject(e)
-            }
+            setTimeout(() => {
+                try {
+                    resolve(bridge.nativeCallFullSync(call))
+                } catch (e) {
+                    reject(e)
+                }
+            })
         })
     }
 
@@ -106,13 +117,15 @@ const initBridge = (bridge, interfaces) => {
                     resolve(answer.value)
                 }
             })
-            try {
-                call.promiseFunctionBinding = functionBinding
-                bridge.nativeCallFullSync(call)
-            } catch (e) {
-                bridge.removeFunction(functionBinding)
-                reject(e)
-            }
+            setTimeout(() => {
+                try {
+                    call.promiseFunctionBinding = functionBinding
+                    bridge.nativeCallFullSync(call)
+                } catch (e) {
+                    bridge.removeFunction(functionBinding)
+                    reject(e)
+                }
+            })
         })
     }
 

@@ -1,5 +1,6 @@
 package de.andycandy.android.bridge.example
 
+import android.graphics.Bitmap
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.webkit.WebResourceRequest
@@ -39,7 +40,7 @@ class MainActivity : AppCompatActivity() {
                 return assetLoader.shouldInterceptRequest(request.url)
             }
 
-            override fun onPageFinished(view: WebView?, url: String?) {
+            override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
                 bridge.init()
             }
         }
@@ -57,9 +58,9 @@ class MainActivity : AppCompatActivity() {
     fun registerFunctionToButton2(function: JSFunctionWithPromise<String>) {
         findViewById<Button>(R.id.button2).setOnClickListener {
             function.call().then {
-                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_SHORT).show() }
             }.catch {
-                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_LONG).show() }
+                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show() }
             }
         }
     }
@@ -67,9 +68,9 @@ class MainActivity : AppCompatActivity() {
     fun registerFunctionToButton3(function: JSFunctionWithPromiseAndArg<Add, String>) {
         findViewById<Button>(R.id.button3).setOnClickListener {
             function.call(Add((Math.random() * 10).toInt(), (Math.random() * 10).toInt())).then {
-                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_LONG).show() }
+                runOnUiThread { Toast.makeText(this, it, Toast.LENGTH_SHORT).show() }
             }.catch {
-                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_LONG).show() }
+                runOnUiThread { Toast.makeText(this, it.message, Toast.LENGTH_SHORT).show() }
             }
         }
     }
