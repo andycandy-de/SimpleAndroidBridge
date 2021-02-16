@@ -149,7 +149,7 @@ Bridge.interfaces.Android.registerOnClickAction((add) => {
 ### Add the library to your android project
 
 ```
-implementation 'com.github.andycandy-de:simple-android-bridge:1.0.0-BETA-b01'
+implementation 'com.github.andycandy-de:simple-android-bridge:1.0.1'
 ```
 
 ### Create a javscript interface

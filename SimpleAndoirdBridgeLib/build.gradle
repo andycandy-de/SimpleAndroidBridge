@@ -70,7 +70,7 @@ publish {
     userOrg = 'andycandy-de'
     groupId = 'com.github.andycandy-de'
     artifactId = 'simple-android-bridge'
-    publishVersion = '1.0.0-BETA-b01'
+    publishVersion = '1.0.1'
     desc = 'Library that let you build an awesome android bridge!'
     licences = ['MIT']
     website = 'https://github.com/andycandy-de/SimpleAndroidBridge'
