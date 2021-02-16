@@ -187,11 +187,11 @@ Android code
 
 ```
 // Bridge can be initialized by calling the 'init' function inside
-// the 'onPageFinished' function of a WebViewClient
+// the 'onPageStarted' function of a WebViewClient
 
 webView.webViewClient = object : WebViewClient() {
 
-    override fun onPageFinished(view: WebView?, url: String?) {
+    override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {
         bridge.init()
     }
 }
