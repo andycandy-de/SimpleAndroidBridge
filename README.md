@@ -229,7 +229,7 @@ console.log(Bridge.interfaces.Android.helloFullSync("Web"))
 
 MIT License
 
-Copyright (c) 2020 andycandy-de
+Copyright (c) 2021 andycandy-de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
