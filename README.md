@@ -68,9 +68,85 @@ Bridge.interfaces.Android.search({surname: "Pitt"}).then((list) => {
 });
 ```
 
+### Callback Functions
+
+If you know Javascript, you also know callback functions. With this Library you can
+inject javascript callback functions into the Android layer.
+
+```
+// Kotlin
+class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
+
+    @NativeCall(CallType.FULL_SYNC)
+    fun registerOnClickAction(jsFunction: JSFunction) {
+        button.setOnClickListener { jsFunction.call() }
+    }
+}
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.registerOnClickAction(() => {
+    console.log("Button Clicked!")
+})
+```
+
+You want to pass an argument to a Javascript function. Just use the type JSFunctionWithArg
+which accepts an argument.
+
+```
+// Kotlin
+class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
+
+    var i = 0
+    
+    @NativeCall(CallType.FULL_SYNC)
+    fun registerOnClickAction(jsFunction: JSFunctionWithArg<Int>) {
+        button.setOnClickListener { jsFunction.call(++i) }
+    }
+}
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.registerOnClickAction((i) => {
+    console.log("Button Clicked! " + i)
+})
+```
+
+To pass more than one argument to a function you can create a data class.
+
+There are also function which can pass a result to the Android layer. Just use the class
+JSFunctionWithPromise or JSFunctionWithPromiseAndArg.
+
+```
+// Kotlin
+class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
+
+    @NativeCall(CallType.FULL_SYNC)
+    fun registerOnClickAction(jsFunction: JSFunctionWithPromiseAndArg<Add, Int>) {
+        button.setOnClickListener {
+            val add = Add((Math.random() * 10).toInt(), (Math.random() * 10).toInt())
+            jsFunction.call(add)
+                .then{ Log.d("AndroidNativeInterface", "Web calculated: ${add.a} + ${add.b} = $it") }
+                .catch{ Log.e("AndroidNativeInterface", "ERROR IN WEB LAYER: $it") }
+        }
+    }
+    
+    data class Add(a: Int, b: Int)
+}
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.registerOnClickAction((add) => {
+    return new Promise((resolve) => { resolve(add.a + add.b) })
+})
+```
+
 ## Setup
 
-### Add the libary to your android project
+### Add the library to your android project
 
 ```
 implementation 'com.github.andycandy-de:simple-android-bridge:1.0.0-BETA-b01'
