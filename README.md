@@ -160,7 +160,7 @@ If you don't want to call the JSFunction anymore just call the function 'close' 
 implementation 'com.github.andycandy-de:simple-android-bridge:1.0.1'
 ```
 
-### Create a javscript interface
+### Create a javascript interface
 
 ```
 class AndroidNativeInterface: DefaultJSInterface("Android") {
