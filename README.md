@@ -144,6 +144,14 @@ Bridge.interfaces.Android.registerOnClickAction((add) => {
 })
 ```
 
+---
+**NOTE**
+
+The resolve and reject of a Promise from a JSFunctionWithPromise is executed in a background thread.
+If you don't want to call the JSFunction anymore just call the function 'close' to clear the function binding.
+
+---
+
 ## Setup
 
 ### Add the library to your android project
