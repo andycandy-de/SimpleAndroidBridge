@@ -47,7 +47,7 @@ The javascript bridge which is built in the android sdk executes all functions i
 class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
 
     @NativeCall(CallType.FULL_PROMISE)
-    fun searchContact(contactFilter: ContactFilter): doInBackground<List<Contact>> { promise ->
+    fun searchContact(contactFilter: ContactFilter) = doInBackground<List<Contact>> { promise ->
         try {
             promise.resolve(contactService.search(contactFilter))
         } catch (e: Exception) {
