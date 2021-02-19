@@ -1,6 +1,6 @@
 # SimpleAndroidBridge
 
-Build a bridge! This library is created to create a powerful interface between Android and Webapp.
+Build a bridge! This library is created to create a powerful interface between Android and Webapp. You can render the Webapp in an Android webview. Create a JSInterface to access the Android layer from the Webapp. You can also call web functions from the android layer.
 
 ✓ Share Objects - Android ⇄ Web
 
