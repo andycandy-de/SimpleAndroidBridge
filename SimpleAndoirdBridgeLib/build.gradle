@@ -64,7 +64,7 @@ task copyInitJS {
     }
 }
 
-build.dependsOn copyInitJS
+preBuild.dependsOn copyInitJS
 
 publish {
     userOrg = 'andycandy-de'

@@ -35,12 +35,12 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
 
 ```
 // Javascript
-console.log(Bridge.interfaces.Android.search({surname: "Pitt"}))
+console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 ```
 
 ### Share Promise
 
-The javascript bridge which is built in the android sdk executes all functions in a blocking way. The webapp is fully blocked until the native function returns. With this libray you can define a Promise return type. With the 'doInBackground' function the android code is executed in a backgroud thread and the webapp is not blocked.
+The javascript bridge which is built in the android sdk executes all functions in a blocking way. The webapp is fully blocked until the native function returns. With this library you can define a Promise return type. With the 'doInBackground' function the android code is executed in a background thread and the webapp is not blocked.
 
 ```
 // Kotlin
@@ -63,7 +63,7 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
 
 ```
 // Javascript
-Bridge.interfaces.Android.search({surname: "Pitt"}).then((list) => {
+Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
     console.log(list);
 });
 ```
