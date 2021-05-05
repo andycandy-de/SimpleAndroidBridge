@@ -59,8 +59,8 @@ const initBridge = (bridge, interfaces) => {
                 const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret }
                 bridge.finishPromise(promiseBinding, JSON.stringify(answer))
             }).catch((err) => {
-                const answer = { hasError: true, error: { message: error.toString(), stackTrace: error.stack } }
-                bridge.finishPromise(promiseBinding, answer)
+                const answer = { hasError: true, error: { message: err.toString(), stackTrace: err.stack } }
+                bridge.finishPromise(promiseBinding, JSON.stringify(answer))
             })
         })
     }
