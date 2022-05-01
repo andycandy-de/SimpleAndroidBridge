@@ -1,15 +1,5 @@
-buildscript {
-    repositories {
-        jcenter()
-    }
-    dependencies {
-        classpath 'com.github.panpf.bintray-publish:bintray-publish:1.0.0'
-    }
-}
-
 apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
-apply plugin: 'com.github.panpf.bintray-publish'
 
 android {
     compileSdkVersion 30
@@ -19,7 +9,7 @@ android {
         minSdkVersion 19
         targetSdkVersion 30
         versionCode 1
-        versionName "1.0"
+        versionName findVersion()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         consumerProguardFiles "consumer-rules.pro"
@@ -37,6 +27,14 @@ android {
         }
     }
 }
+
+ext {
+    PUBLISH_GROUP_ID = 'com.github.andycandy-de'
+    PUBLISH_VERSION = findVersion()
+    PUBLISH_ARTIFACT_ID = 'simple-android-bridge'
+}
+
+apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
 
 dependencies {
     implementation fileTree(dir: "libs", include: ["*.jar"])
@@ -66,12 +64,6 @@ task copyInitJS {
 
 preBuild.dependsOn copyInitJS
 
-publish {
-    userOrg = 'andycandy-de'
-    groupId = 'com.github.andycandy-de'
-    artifactId = 'simple-android-bridge'
-    publishVersion = '1.0.1'
-    desc = 'Library that let you build an awesome android bridge!'
-    licences = ['MIT']
-    website = 'https://github.com/andycandy-de/SimpleAndroidBridge'
+def findVersion() {
+    file('version').text
 }

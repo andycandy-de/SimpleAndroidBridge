@@ -1,0 +1,27 @@
+def propertyMap = [
+        'ossrhUsername': 'OSSRH_USERNAME',
+        'ossrhPassword': 'OSSRH_PASSWORD',
+        'sonatypeStagingProfileId': 'SONATYPE_STAGING_PROFILE_ID',
+        'signing.gnupg.useLegacyGpg': 'SIGNING_GNUPG_USELEGACYGPG'
+]
+File propsFile = project.rootProject.file('local.properties')
+if (propsFile.exists()) {
+    // Read local.properties file first if it exists
+    Properties p = new Properties()
+    new FileInputStream(propsFile).withCloseable { is -> p.load(is) }
+    p.findAll{ propertyMap.containsKey(it.key) }.each { name, value -> ext[name] = value }
+}
+propertyMap.findAll { propName, envName -> System.getenv(envName)}.each {propName, envName ->
+    ext[propName] = System.getenv(envName)
+}
+
+// Set up Sonatype repository
+nexusPublishing {
+    repositories {
+        sonatype {
+            stagingProfileId = sonatypeStagingProfileId
+            username = ossrhUsername
+            password = ossrhPassword
+        }
+    }
+}

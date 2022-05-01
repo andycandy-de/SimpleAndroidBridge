@@ -156,8 +156,19 @@ If you don't want to call the JSFunction anymore just call the function 'close' 
 
 ### Add the library to your android project
 
+Add maven central to the repositories block.
 ```
-implementation 'com.github.andycandy-de:simple-android-bridge:1.0.1'
+repositories {
+    google()
+    mavenCentral()
+}
+```
+
+Add the library to the dependencies block.
+```
+dependencies {
+    implementation 'com.github.andycandy-de:simple-android-bridge:1.0.2'
+}
 ```
 
 ### Create a javascript interface
@@ -237,7 +248,7 @@ console.log(Bridge.interfaces.Android.helloFullSync("Web"))
 
 MIT License
 
-Copyright (c) 2021 andycandy-de
+Copyright (c) 2022 andycandy-de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

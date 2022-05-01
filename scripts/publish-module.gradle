@@ -1,0 +1,79 @@
+apply plugin: 'maven-publish'
+apply plugin: 'signing'
+
+task androidSourcesJar(type: Jar) {
+    archiveClassifier.set('sources')
+    if (project.plugins.findPlugin("com.android.library")) {
+        // For Android libraries
+        from android.sourceSets.main.java.srcDirs
+        from android.sourceSets.main.kotlin.srcDirs
+    } else {
+        // For pure Kotlin libraries, in case you have them
+        from sourceSets.main.java.srcDirs
+        from sourceSets.main.kotlin.srcDirs
+    }
+}
+
+artifacts {
+    archives androidSourcesJar
+}
+
+group = PUBLISH_GROUP_ID
+version = PUBLISH_VERSION
+
+afterEvaluate {
+    publishing {
+        publications {
+            release(MavenPublication) {
+                // The coordinates of the library, being set from variables that
+                // we'll set up later
+                groupId PUBLISH_GROUP_ID
+                artifactId PUBLISH_ARTIFACT_ID
+                version PUBLISH_VERSION
+
+                // Two artifacts, the `aar` (or `jar`) and the sources
+                if (project.plugins.findPlugin("com.android.library")) {
+                    from components.release
+                } else {
+                    from components.java
+                }
+
+                artifact androidSourcesJar
+
+                // Mostly self-explanatory metadata
+                pom {
+                    name = PUBLISH_ARTIFACT_ID
+                    description = 'Build a bridge! This library is created to create a powerful interface between Android and Webapp.'
+                    url = 'https://github.com/andycandy-de/SimpleAndroidBridge'
+                    licenses {
+                        license {
+                            name = ' SimpleAndroidBridge'
+                            url = 'https://github.com/andycandy-de/SimpleAndroidBridge/blob/development/LICENSE'
+                        }
+                    }
+                    developers {
+                        developer {
+                            id = 'andycandy-de'
+                            name = 'AndyCandy'
+                            email = 'andyh89@freenet.de'
+                        }
+                        // Add all other devs here...
+                    }
+
+                    // Version control info - if you're using GitHub, follow the
+                    // format as seen here
+                    scm {
+                        connection = 'scm:git:https://github.com/andycandy-de/SimpleAndroidBridge'
+                        developerConnection = 'scm:git:https://github.com/andycandy-de/SimpleAndroidBridge'
+                        url = 'https://github.com/andycandy-de/SimpleAndroidBridge'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    useGpgCmd()
+    sign publishing.publications
+}
