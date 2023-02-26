@@ -11,8 +11,11 @@ if (propsFile.exists()) {
     new FileInputStream(propsFile).withCloseable { is -> p.load(is) }
     p.findAll{ propertyMap.containsKey(it.key) }.each { name, value -> ext[name] = value }
 }
-propertyMap.findAll { propName, envName -> System.getenv(envName)}.each {propName, envName ->
+propertyMap.findAll { propName, envName -> System.getenv(envName)}.each { propName, envName ->
     ext[propName] = System.getenv(envName)
+}
+propertyMap.findAll { propName, envName -> !project.hasProperty(propName) }.each { propName, envName ->
+    ext[propName] = ''
 }
 
 // Set up Sonatype repository
