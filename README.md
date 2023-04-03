@@ -152,6 +152,65 @@ If you don't want to call the JSFunction anymore just call the function 'close' 
 
 ---
 
+### Different native call types
+
+This library supports different native call types which let you decide how to call the native code.
+
+#### Full sync
+
+The call type `CallType.FULL_SYNC` calls the native code in a blocking way. The javascript execution waits until the native android function returns. The drawback is the the web view doesn't interact until the native execution terminates. *(Not recommended for long running tasks)*
+
+```kotlin
+@NativeCall(CallType.FULL_SYNC)
+fun searchContact(contactFilter: ContactFilter): List<Contact> {
+    return contactService.search(contactFilter)
+}
+```
+
+```javascript
+console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
+```
+
+#### Web promise
+
+The call type `CallType.WEB_PROMISE` works exactly like the **Full sync** call does. The difference is that the return of the javascript call is a promise. But the native android function is still called in a blocking way. *(Recommended if you are unsure about duration and you might need to migrate to FULL_PROMISE)*
+
+```kotlin
+@NativeCall(CallType.WEB_PROMISE)
+fun searchContact(contactFilter: ContactFilter): List<Contact> {
+    return contactService.search(contactFilter)
+}
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
+    console.log(list);
+});
+```
+
+#### Full promise
+
+The call type `CallType.FULL_PROMISE` allowes you to call the native android code in a background thread. So the javascript execution is not blocked and web view is free to perform its work. *(Recommended for long running tasks)*
+
+```kotlin
+@NativeCall(CallType.FULL_PROMISE)
+fun searchContact(contactFilter: ContactFilter) = doInBackground<List<Contact>> { promise ->
+    try {
+        promise.resolve(contactService.search(contactFilter))
+    } catch (e: Exception) {
+        promise.reject(e)
+    }
+}
+```
+
+```
+// Javascript
+Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
+    console.log(list);
+});
+```
+
 ## Setup
 
 ### Add the library to your android project
