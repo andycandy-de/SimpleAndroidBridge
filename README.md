@@ -161,6 +161,7 @@ This library supports different native call types which let you decide how to ca
 The call type `CallType.FULL_SYNC` calls the native code in a blocking way. The javascript execution waits until the native android function returns. The drawback is the the web view doesn't interact until the native execution terminates. *(Not recommended for long running tasks)*
 
 ```kotlin
+// Kotlin
 @NativeCall(CallType.FULL_SYNC)
 fun searchContact(contactFilter: ContactFilter): List<Contact> {
     return contactService.search(contactFilter)
@@ -168,6 +169,7 @@ fun searchContact(contactFilter: ContactFilter): List<Contact> {
 ```
 
 ```javascript
+// Javascript
 console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 ```
 
@@ -176,6 +178,7 @@ console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 The call type `CallType.WEB_PROMISE` works exactly like the **Full sync** call does. The difference is that the return of the javascript call is a promise. But the native android function is still called in a blocking way. *(Recommended if you are unsure about duration and you might need to migrate to FULL_PROMISE)*
 
 ```kotlin
+// Kotlin
 @NativeCall(CallType.WEB_PROMISE)
 fun searchContact(contactFilter: ContactFilter): List<Contact> {
     return contactService.search(contactFilter)
@@ -194,6 +197,7 @@ Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
 The call type `CallType.FULL_PROMISE` allowes you to call the native android code in a background thread. So the javascript execution is not blocked and web view is free to perform its work. *(Recommended for long running tasks)*
 
 ```kotlin
+// Kotlin
 @NativeCall(CallType.FULL_PROMISE)
 fun searchContact(contactFilter: ContactFilter) = doInBackground<List<Contact>> { promise ->
     try {
