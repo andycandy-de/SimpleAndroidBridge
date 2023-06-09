@@ -1,7 +1,9 @@
 package de.andycandy.android.bridge
 
 import android.util.Log
+import androidx.annotation.Keep
 
+@Keep
 class Promise<R> {
 
     enum class State {PENDING, RESOLVED, REJECTED}
