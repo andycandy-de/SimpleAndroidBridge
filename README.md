@@ -18,7 +18,7 @@ Build a bridge! This library is created to create a powerful interface between A
 
 The javascript bridge which is built in the android sdk just accepts primitive types. That is not enogth? This librabry allows you to share complex objects between web and android. Just define the types as arguments or return in the android native functions. This library automatically converts a javascript object to a kotlin object and vice versa.
 
-```
+```kotlin
 // Kotlin
 class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
 
@@ -33,7 +33,7 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
     val mail: String? = null, val phonenumber: String? = null)
 ```
 
-```
+```js
 // Javascript
 console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 ```
@@ -42,7 +42,7 @@ console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 
 The javascript bridge which is built in the android sdk executes all functions in a blocking way. The webapp is fully blocked until the native function returns. With this library you can define a Promise return type. With the 'doInBackground' function the android code is executed in a background thread and the webapp is not blocked.
 
-```
+```kotlin
 // Kotlin
 class AndroidNativeInterface(val contactService: ContactService): DefaultJSInterface("Android") {
 
@@ -61,7 +61,7 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
     val mail: String? = null, val phonenumber: String? = null)
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
     console.log(list);
@@ -73,7 +73,7 @@ Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
 If you know Javascript, you also know callback functions. With this Library you can
 inject javascript callback functions into the Android layer.
 
-```
+```kotlin
 // Kotlin
 class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
 
@@ -84,7 +84,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
 }
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.registerOnClickAction(() => {
     console.log("Button Clicked!")
@@ -94,7 +94,7 @@ Bridge.interfaces.Android.registerOnClickAction(() => {
 You want to pass an argument to a Javascript function. Just use the type JSFunctionWithArg
 which accepts an argument.
 
-```
+```kotlin
 // Kotlin
 class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
 
@@ -107,7 +107,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
 }
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.registerOnClickAction((i) => {
     console.log("Button Clicked! " + i)
@@ -119,7 +119,7 @@ To pass more than one argument to a function you can create a data class.
 There are also function which can pass a result to the Android layer. Just use the class
 JSFunctionWithPromise or JSFunctionWithPromiseAndArg.
 
-```
+```kotlin
 // Kotlin
 class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") {
 
@@ -137,7 +137,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
 }
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.registerOnClickAction((add) => {
     return new Promise((resolve) => { resolve(add.a + add.b) })
@@ -168,7 +168,7 @@ fun searchContact(contactFilter: ContactFilter): List<Contact> {
 }
 ```
 
-```javascript
+```js
 // Javascript
 console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 ```
@@ -185,7 +185,7 @@ fun searchContact(contactFilter: ContactFilter): List<Contact> {
 }
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
     console.log(list);
@@ -208,7 +208,7 @@ fun searchContact(contactFilter: ContactFilter) = doInBackground<List<Contact>> 
 }
 ```
 
-```
+```js
 // Javascript
 Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
     console.log(list);
@@ -220,7 +220,7 @@ Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
 ### Add the library to your android project
 
 Add maven central to the repositories block.
-```
+```gradle
 repositories {
     google()
     mavenCentral()
@@ -228,7 +228,7 @@ repositories {
 ```
 
 Add the library to the dependencies block.
-```
+```gradle
 dependencies {
     implementation 'com.github.andycandy-de:simple-android-bridge:1.0.2'
 }
@@ -236,7 +236,7 @@ dependencies {
 
 ### Create a javascript interface
 
-```
+```kotlin
 class AndroidNativeInterface: DefaultJSInterface("Android") {
 
     @NativeCall(CallType.FULL_SYNC)
@@ -258,7 +258,7 @@ class AndroidNativeInterface: DefaultJSInterface("Android") {
 
 ### Create the bridge and add the interface
 
-```
+```kotlin
 val bridge = Bridge(applicationContext, webView)
 bridge.addJSInterface(AndroidNativeInterface())
 ```
@@ -267,7 +267,7 @@ bridge.addJSInterface(AndroidNativeInterface())
 
 Android code
 
-```
+```kotlin
 // Bridge can be initialized by calling the 'init' function inside
 // the 'onPageStarted' function of a WebViewClient
 
@@ -281,7 +281,7 @@ webView.webViewClient = object : WebViewClient() {
 
 Javascript code
 
-```
+```js
 // Bridge can be initialized by calling the 'init' function in
 // Javascript. Register function to 'Bridge.afterInitialize' to
 // start the webapp after the bridge is initialized.
@@ -303,7 +303,7 @@ startApp(() => {
 
 ### Access the interface in the webapp
 
-```
+```js
 console.log(Bridge.interfaces.Android.helloFullSync("Web"))
 ```
 
