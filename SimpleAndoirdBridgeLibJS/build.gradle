@@ -7,7 +7,7 @@ jsOptions {
     outputPath = file("./build/js/")
     compilationLevel = "WHITESPACE_ONLY"
     jsVersionIn = 'ECMASCRIPT_2020'
-    jsVersionOut = 'ECMASCRIPT_2015'
+    jsVersionOut = 'ECMASCRIPT5'
     combineAllFiles = false
     keepSameName = false
 }

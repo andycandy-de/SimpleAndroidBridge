@@ -173,13 +173,12 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
             CallType.WEB_PROMISE -> "nativeCallWebPromise"
             CallType.FULL_PROMISE -> "nativeCallFullPromise"
         }
-        return """(${args})=>{
-            const call={
+        return """function(${args}) {
+            return ${name}.${function}({
                 "interfaceName":"${jsInterfaceData.name}",
                 "functionName":"${kFunction.name}",
                 "arguments":[${args}]
-            };
-            return ${name}.${function}(call);
+            });
         }
         """.trimIndent().replace("\n", "").replace(Regex("\\s+"), " ")
     }
