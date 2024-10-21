@@ -5,7 +5,7 @@ plugins {
 jsOptions {
     inputPath = file("./src/main/js/")
     outputPath = file("./build/js/")
-    compilationLevel = "WHITESPACE_ONLY"
+    compilationLevel = "SIMPLE_OPTIMIZATIONS"
     jsVersionIn = 'ECMASCRIPT_2020'
     jsVersionOut = 'ECMASCRIPT5'
     combineAllFiles = false
