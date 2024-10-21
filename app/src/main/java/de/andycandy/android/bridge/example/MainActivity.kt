@@ -45,7 +45,7 @@ class MainActivity : AppCompatActivity() {
             }
         }
 
-        webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
+        webView.loadUrl("file:///android_asset/www/index.html")
     }
 
     fun registerFunctionToButton1(function: JSFunctionWithArg<Int>) {
