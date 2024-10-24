@@ -2,7 +2,8 @@ def propertyMap = [
         'ossrhUsername': 'OSSRH_USERNAME',
         'ossrhPassword': 'OSSRH_PASSWORD',
         'sonatypeStagingProfileId': 'SONATYPE_STAGING_PROFILE_ID',
-        'signing.gnupg.useLegacyGpg': 'SIGNING_GNUPG_USELEGACYGPG'
+        'signing.gnupg.useLegacyGpg': 'SIGNING_GNUPG_USELEGACYGPG',
+        'signing.gnupg.keyName': 'SIGNING_GNUPG_KEYNAME',
 ]
 File propsFile = project.rootProject.file('local.properties')
 if (propsFile.exists()) {
