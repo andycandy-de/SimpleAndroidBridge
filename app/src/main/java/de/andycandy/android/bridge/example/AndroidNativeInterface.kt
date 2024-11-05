@@ -1,33 +1,38 @@
 package de.andycandy.android.bridge.example
 
-import de.andycandy.android.bridge.*
+import de.andycandy.android.bridge.DefaultJSInterface
+import de.andycandy.android.bridge.JSFunction
+import de.andycandy.android.bridge.JSFunctionWithArg
+import de.andycandy.android.bridge.JSFunctionWithPromise
+import de.andycandy.android.bridge.JSFunctionWithPromiseAndArg
 
 class AndroidNativeInterface(private val mainActivity: MainActivity): DefaultJSInterface("Android"), AndroidInterface {
 
     override fun helloFullSync(name: String): String {
-        return "hello $name"
+        return "Hello $name FullSync from Thread ${Thread.currentThread().name}"
     }
 
     override fun helloWebPromise(name: String): String {
-        return "hello $name"
+        return "Hello $name WebPromise from Thread ${Thread.currentThread().name}"
     }
 
     override fun helloFullPromise(name: String) = doInBackground<String> { promise ->
-        promise.resolve("hello $name")
+        promise.resolve("Hello $name FullPromise from Thread ${Thread.currentThread().name}")
     }
 
-    override fun registerFunction(function: JSFunctionWithArg<Int>) = doInBackground<Unit> { promise ->
+    override fun registerJSFunctionWithArg(function: JSFunctionWithArg<Int>) {
         mainActivity.registerFunctionToButton1(function)
-        promise.resolve(Unit)
     }
 
-    override fun registerFunctionWithPromise(function: JSFunctionWithPromise<String>) = doInBackground<Unit> { promise ->
+    override fun registerFunctionWithPromise(function: JSFunctionWithPromise<Int>) {
         mainActivity.registerFunctionToButton2(function)
-        promise.resolve(Unit)
     }
 
-    override fun registerFunctionWithPromiseAndArg(function: JSFunctionWithPromiseAndArg<Add, String>) = doInBackground<Unit> { promise ->
+    override fun registerFunctionWithPromiseAndArg(function: JSFunctionWithPromiseAndArg<Add, Int>) {
         mainActivity.registerFunctionToButton3(function)
-        promise.resolve(Unit)
+    }
+
+    override fun registerFunction(function: JSFunction) {
+        mainActivity.registerFunctionToButton4(function)
     }
 }

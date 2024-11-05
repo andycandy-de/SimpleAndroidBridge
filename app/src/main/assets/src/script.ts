@@ -9,33 +9,61 @@ function startApp(f: () => void) {
     }
 }
 
+bridge.init()
+
 startApp(() => {
+
+    let runTimeVal = 0
+
     const text = document.getElementById("text")!
+    const reload = document.getElementById("reload")!
+    const info = document.getElementById("info")!
     text.innerHTML = ""
-    
+
     const appendText = (s: string) => {
-        text.innerHTML = text.innerHTML + "</br>" + s
+        text.innerHTML = `${text.innerHTML}</br>${s}`
     }
+
+    const infoUpdater = () => {
+        runTimeVal = Math.floor(performance.now())
+        info.innerHTML = `Run time ${runTimeVal}ms, open function bindings ${bridge.getFunctionBinding().length}`
+    }
+
+    infoUpdater()
+    setInterval(infoUpdater, 31)
+    reload.addEventListener("click", () => { window.location.reload() })
+
+    // define the interface as const
     const android = bridge.interfaces.Android
 
+    // call different native call types
     appendText(android.helloFullSync("Web"))
-    android.helloWebPromise("Web").then((s) => {appendText(s)})
-    android.helloFullPromise("Web").then((s) => {appendText(s)})
-    
-    android.registerFunction((i) => {
+    android.helloWebPromise("Web").then((s) => { appendText(s) })
+    android.helloFullPromise("Web").then((s) => { appendText(s) })
+
+    // register functions to the native layer
+    android.registerJSFunctionWithArg((i) => {
         appendText(i.toLocaleString())
-    }).then(() => console.log("Function1 registered")).catch((err) => console.log(err.toString()))
+    })
 
     android.registerFunctionWithPromise(() => {
-        return new Promise<string>((resolve) => {resolve("Hello this app runs since " + performance.now())})
-    }).then(() => console.log("Function2 registered")).catch((err) => console.log(err.toString()))
+        return new Promise<number>((resolve) => {
+            appendText(`Sending run time ${runTimeVal}ms to native layer!`)
+            resolve(runTimeVal)
+        })
+    })
     
     android.registerFunctionWithPromiseAndArg((add) => {
-        return new Promise<string>((resolve) => {
+        return new Promise<number>((resolve) => {
             const result = add.a + add.b
-            resolve(`WEB CALCULATION: ${add.a} + ${add.b} = ${result}`)
+            appendText(`Sending result ${result} of web calculation from native values ${add.a} + ${add.b} to native layer!`)
+            resolve(result)
         })
-    }).then(() => console.log("Function3 registered")).catch((err) => console.log(err.toString()))
+    })
+
+    android.registerFunction(() => {
+        appendText(`Function binding demo is available!`)
+    })
 })
 
 // Api definitions
@@ -44,14 +72,19 @@ interface AndroidInterface {
     helloFullSync(name: string): string
     helloWebPromise(name: string): Promise<string>
     helloFullPromise(name: string): Promise<string>
-    registerFunction(f: JSFunctionWithArg<number>): Promise<void>
-    registerFunctionWithPromise(f: JSFunctionWithPromise<string>): Promise<void>
-    registerFunctionWithPromiseAndArg(f: JSFunctionWithPromiseAndArg<Add, string>): Promise<void>
+    registerJSFunctionWithArg(f: JSFunctionWithArg<number>): void
+    registerFunctionWithPromise(f: JSFunctionWithPromise<number>): void
+    registerFunctionWithPromiseAndArg(f: JSFunctionWithPromiseAndArg<Add, number>): void
+    registerFunction(f: JSFunction): void
 }
 
 interface Add {
     a: number
     b: number
+}
+
+interface JSFunction {
+    (): void
 }
 
 interface JSFunctionWithArg<A> {
@@ -67,7 +100,9 @@ interface JSFunctionWithPromiseAndArg<A, R> {
 }
 
 interface Bridge {
+    init: () => void
     initialized: boolean
     afterInitialize: () => void
     interfaces: {Android: AndroidInterface}
+    getFunctionBinding: () => number[]
 }

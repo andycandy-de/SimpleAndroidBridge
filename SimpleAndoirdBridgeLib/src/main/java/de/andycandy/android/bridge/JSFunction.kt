@@ -1,9 +1,9 @@
 package de.andycandy.android.bridge
 
-import android.util.Log
+import java.util.UUID
 import kotlin.reflect.KClass
 
-open class JSFunctionParent(val innerBridge: InnerBridge, val functionBinding: Long) {
+open class JSFunctionParent(protected val innerBridge: InnerBridge, protected val functionUUID: UUID) : AutoCloseable {
 
     private var closed: Boolean = false
 
@@ -11,46 +11,51 @@ open class JSFunctionParent(val innerBridge: InnerBridge, val functionBinding: L
         if (closed) error("Function is already closed!")
     }
 
-    fun close() {
+    override fun close() {
         synchronized(this) {
             checkClosed()
             closed = true
         }
-        innerBridge.removeFunction(this)
-    }
-
-    fun finalize() {
-        if (!closed) {
-            Log.w("JSFunction", "There is no more reference to this function but the close function is not called!")
-            innerBridge.removeFunction(this)
-        }
+        innerBridge.removeFunction(functionUUID)
     }
 }
 
-class JSFunction(innerBridge: InnerBridge, functionBinding: Long) : JSFunctionParent(innerBridge, functionBinding) {
+class JSFunction(innerBridge: InnerBridge, functionUUID: UUID) : JSFunctionParent(innerBridge, functionUUID) {
+
     fun call() {
         checkClosed()
-        innerBridge.callJSFunction(this)
+        innerBridge.callJSFunction(functionUUID)
     }
+
+    operator fun invoke() = call()
 }
 
-class JSFunctionWithArg<A>(innerBridge: InnerBridge, functionBinding: Long) : JSFunctionParent(innerBridge, functionBinding) {
+class JSFunctionWithArg<A>(innerBridge: InnerBridge, functionUUID: UUID) : JSFunctionParent(innerBridge, functionUUID) {
+
     fun call(arg: A) {
         checkClosed()
-        innerBridge.callJSFunction(this, arg)
+        innerBridge.callJSFunction(functionUUID, arg)
     }
+
+    operator fun invoke (arg: A) = call(arg)
 }
 
-class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionBinding: Long, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionBinding) {
+class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionUUID: UUID, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
+
     fun call(): Promise<R> {
         checkClosed()
-        return innerBridge.callJSFunctionWithPromise(this)
+        return innerBridge.callJSFunctionWithPromise(functionUUID, this)
     }
+
+    operator fun invoke() = call()
 }
 
-class JSFunctionWithPromiseAndArg<A, R>(innerBridge: InnerBridge, functionBinding: Long, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionBinding) {
+class JSFunctionWithPromiseAndArg<A, R>(innerBridge: InnerBridge, functionUUID: UUID, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
+
     fun call(arg: A): Promise<R> {
         checkClosed()
-        return innerBridge.callJSFunctionWithPromise(this, arg)
+        return innerBridge.callJSFunctionWithPromise(functionUUID, this, arg)
     }
+
+    operator fun invoke(arg: A) = call(arg)
 }

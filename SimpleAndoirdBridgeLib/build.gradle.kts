@@ -1,69 +1,92 @@
-apply plugin: 'com.android.library'
-apply plugin: 'kotlin-android'
+import com.vanniktech.maven.publish.SonatypeHost
+
+plugins {
+    alias(libs.plugins.android.library)
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.gradle.jsgradlecompiler)
+    alias(libs.plugins.maven.publish)
+}
+
+object JsVars {
+    const val JS_IN = "./src/main/js/"
+    const val JS_OUT = "./build/js/"
+}
 
 android {
-    compileSdkVersion 30
-    buildToolsVersion "30.0.3"
+    namespace = "de.andycandy.android.bridge"
+    compileSdk = 35
 
     defaultConfig {
-        minSdkVersion 19
-        targetSdkVersion 30
-        versionCode 1
-        versionName findVersion()
-
-        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-        consumerProguardFiles "consumer-rules.pro"
+        minSdk = 24
+        consumerProguardFiles("consumer-rules.pro")
     }
-
     compileOptions {
-        sourceCompatibility JavaVersion.VERSION_1_8
-        targetCompatibility JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_1_8
+        targetCompatibility = JavaVersion.VERSION_1_8
     }
-
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+    kotlinOptions {
+        jvmTarget = "1.8"
+    }
+    sourceSets {
+        named("main") {
+            assets.srcDirs(JsVars.JS_OUT)
         }
     }
 }
-
-ext {
-    PUBLISH_GROUP_ID = 'com.github.andycandy-de'
-    PUBLISH_VERSION = findVersion()
-    PUBLISH_ARTIFACT_ID = 'simple-android-bridge'
-}
-
-apply from: "${rootProject.projectDir}/scripts/publish-module.gradle"
 
 dependencies {
-    implementation fileTree(dir: "libs", include: ["*.jar"])
-    implementation "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
-    implementation "org.jetbrains.kotlin:kotlin-reflect:$kotlin_version"
-    implementation 'androidx.core:core-ktx:1.3.2'
-    implementation 'androidx.appcompat:appcompat:1.2.0'
-    implementation 'com.google.code.gson:gson:2.8.6'
-    testImplementation 'junit:junit:4.12'
-    androidTestImplementation 'androidx.test.ext:junit:1.1.2'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.3.0'
+
+    compileOnly(libs.androidx.appcompat)
+    implementation(libs.androidx.core.ktx)
+    implementation(libs.gson)
+    implementation(kotlin("reflect"))
 }
 
-task cleanAssets(type: Delete) {
-    delete file('./src/main/assets')
+jsOptions {
+    inputPath = file(JsVars.JS_IN).path
+    outputPath = file(JsVars.JS_OUT).path
+    compilationLevel = "SIMPLE_OPTIMIZATIONS"
+    jsVersionIn = "ECMASCRIPT_2020"
+    jsVersionOut = "ECMASCRIPT5"
+    isCombineAllFiles = false
+    isKeepSameName = false
 }
 
-task copyInitJS {
-    dependsOn(':SimpleAndoirdBridgeLibJS:compileJs', cleanAssets)
-    doLast {
-        copy {
-            from file('./../SimpleAndoirdBridgeLibJS/build/js')
-            into file('./src/main/assets')
-        }
+tasks {
+    preBuild {
+        dependsOn("compileJs")
     }
 }
 
-preBuild.dependsOn copyInitJS
+mavenPublishing {
+    publishToMavenCentral(SonatypeHost.DEFAULT)
 
-def findVersion() {
-    file('version').text
+    coordinates("com.github.andycandy-de", "simple-android-bridge", "1.1.0-SNAPSHOT")
+
+    pom {
+        name.set("simple-android-bridge")
+        description.set("Build a bridge! This library is created to create a powerful interface between Android and Webapp.")
+        url.set("https://github.com/andycandy-de/SimpleAndroidBridge")
+        licenses {
+            license {
+                name.set("The MIT License (MIT)")
+                url.set("https://mit-license.org/license.txt")
+                distribution.set("https://mit-license.org/license.txt")
+            }
+        }
+        developers {
+            developer {
+                id.set("andycandy-de")
+                name.set("AndyCandy")
+                url.set("https://github.com/andycandy-de")
+            }
+        }
+        scm {
+            url.set("https://github.com/andycandy-de/SimpleAndroidBridge")
+            connection.set("scm:git:https://github.com/andycandy-de/SimpleAndroidBridge")
+            developerConnection.set("scm:git:https://github.com/andycandy-de/SimpleAndroidBridge")
+        }
+    }
+
+    signAllPublications()
 }

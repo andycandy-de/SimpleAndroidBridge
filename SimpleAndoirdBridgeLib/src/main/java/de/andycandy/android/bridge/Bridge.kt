@@ -1,20 +1,32 @@
 package de.andycandy.android.bridge
 
+import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import com.google.gson.Gson
 import com.google.gson.JsonElement
 import com.google.gson.JsonNull
 import com.google.gson.reflect.TypeToken
+import java.lang.ref.PhantomReference
+import java.lang.ref.ReferenceQueue
 import java.lang.reflect.InvocationTargetException
 import java.lang.reflect.Type
 import java.math.BigDecimal
 import java.math.BigInteger
+import java.util.Collections
+import java.util.UUID
 import java.util.concurrent.Executors
 import java.util.concurrent.atomic.AtomicLong
-import kotlin.reflect.*
-import kotlin.reflect.full.*
+import kotlin.reflect.KClass
+import kotlin.reflect.KFunction
+import kotlin.reflect.KParameter
+import kotlin.reflect.KType
+import kotlin.reflect.KVariance
+import kotlin.reflect.full.isSuperclassOf
+import kotlin.reflect.full.memberFunctions
+import kotlin.reflect.full.superclasses
 
 class Bridge(context: Context, webView: WebView, name: String = "Bridge") {
 
@@ -27,21 +39,30 @@ class Bridge(context: Context, webView: WebView, name: String = "Bridge") {
     fun addJSInterface(jsInterface: JSInterface) = innerBridge.addJSInterface(jsInterface)
 }
 
+@SuppressLint("SetJavaScriptEnabled")
 class InnerBridge(private val context: Context, private val webView: WebView, private val name: String = "Bridge") {
+
+    private val gson = Gson()
+
+    private val interfaces = mutableMapOf<String, JSInterfaceData>()
+
+    private val pendingPromises = mutableMapOf<Long, Pair<Promise<*>, KClass<*>>>()
+
+    private val currentPendingPromiseID: AtomicLong = AtomicLong(0)
+
+    private val executor = Executors.newSingleThreadExecutor()
+
+    private val referenceQueue = ReferenceQueue<JSFunctionParent>()
+
+    private val functionBindingMap = Collections.synchronizedMap(mutableMapOf<UUID, JSFunctionPhantomReference>())
+
+    private val afterInitializeListeners = Collections.synchronizedList(mutableListOf<Runnable>())
 
     init {
         webView.settings.javaScriptEnabled = true
         webView.addJavascriptInterface(this, name)
+        executor.execute { checkJSFunctionReference() }
     }
-
-    private val gson = Gson()
-    private val interfaces = mutableMapOf<String, JSInterfaceData>()
-
-    private val executor = Executors.newCachedThreadPool()
-    private val pendingPromises = mutableMapOf<Long, Pair<Promise<*>, KClass<*>>>()
-    private val currentPendingPromiseID: AtomicLong = AtomicLong(0)
-
-    private val afterInitializeListeners = mutableListOf<Runnable>()
 
     @JavascriptInterface
     fun init() {
@@ -51,7 +72,8 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
     @JavascriptInterface
     fun nativeAfterInitialize() {
-        afterInitializeListeners.forEach(Runnable::run)
+        functionBindingMap.clear()
+        afterInitializeListeners.toList().forEach(Runnable::run)
     }
 
     @JavascriptInterface
@@ -80,7 +102,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
     @JavascriptInterface
     fun finishPromise(promiseBinding: Long, answerAsString: String) {
-        val answer = gson.fromJson<Answer>(answerAsString, Answer::class.java)
+        val answer = gson.fromJson(answerAsString, Answer::class.java)
         val promisePair = synchronized(this) {
             val p = pendingPromises[promiseBinding]
             pendingPromises.remove(promiseBinding)
@@ -91,7 +113,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
         val promise = promisePair.first as Promise<Any?>
         val kClass = promisePair.second
 
-        executor.execute {
+        doInMainThread {
             when {
                 answer.hasError -> promise.reject(Exception("${answer.error?.message} ${answer.error?.stackTrace}"))
                 kClass == Unit::class -> promise.resolve(Unit)
@@ -110,47 +132,69 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
         executeJavaScript("if (${name}.initialized) {${name}.interfaces=${createInterfacesJS()}}")
     }
 
-    fun removeFunction(jsFunctionParent: JSFunctionParent) {
-        executeJavaScript("${name}.removeFunction(${jsFunctionParent.functionBinding})")
+    fun removeFunction(functionUUID: UUID) {
+        synchronized(this) {
+            val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: return@synchronized
+            executeJavaScript("${name}.removeFunction(${functionBinding})")
+            functionBindingMap.remove(functionUUID)
+        }
     }
 
-    fun callJSFunction(jsFunctionParent: JSFunctionParent) {
-        executeJavaScript("${name}.executeFunction(${jsFunctionParent.functionBinding})")
+    fun callJSFunction(functionUUID: UUID) {
+        synchronized(this) {
+            val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+            executeJavaScript("${name}.executeFunction(${functionBinding})")
+        }
     }
 
-    fun <A> callJSFunction(jsFunctionParent: JSFunctionParent, arg: A) {
-        executeJavaScript("${name}.executeFunction(${jsFunctionParent.functionBinding},${gson.toJson(arg)})")
+    fun <A> callJSFunction(functionUUID: UUID, arg: A) {
+        synchronized(this) {
+            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+            executeJavaScript("${name}.executeFunction(${functionBinding},${gson.toJson(arg)})")
+        }
     }
 
-    fun <R> callJSFunctionWithPromise(jsFunctionWithPromise: JSFunctionWithPromise<R>): Promise<R> {
-        val promise = Promise<R>()
-        val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-        pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
-        executeJavaScript("${name}.executeFunctionWithPromiseBinding(${jsFunctionWithPromise.functionBinding},${pendingPromiseID})")
-        return promise
+    fun <R> callJSFunctionWithPromise(functionUUID: UUID, jsFunctionWithPromise: JSFunctionWithPromise<R>) : Promise<R> {
+        synchronized(this) {
+            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+            val promise = Promise<R>()
+            val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
+            pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
+            executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID})")
+            return promise
+        }
     }
 
-    fun <A, R> callJSFunctionWithPromise(jsFunctionWithPromise: JSFunctionWithPromiseAndArg<A, R>, arg: A): Promise<R> {
-        val promise = Promise<R>()
-        val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-        pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
-        executeJavaScript("${name}.executeFunctionWithPromiseBinding(${jsFunctionWithPromise.functionBinding},${pendingPromiseID},${gson.toJson(arg)})")
-        return promise
+    fun <A, R> callJSFunctionWithPromise(functionUUID: UUID, jsFunctionWithPromise: JSFunctionWithPromiseAndArg<A, R>, arg: A): Promise<R> {
+        synchronized(this) {
+            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+            val promise = Promise<R>()
+            val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
+            pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
+            executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID},${gson.toJson(arg)})")
+            return promise
+        }
     }
 
     private fun handlePromise(promise: Promise<*>, call: Call) {
-        val functionWithArg = JSFunctionWithArg<Any?>(this, call.promiseFunctionBinding!!)
+        val functionBinding = call.promiseFunctionBinding!!
+        val functionUUID = UUID.randomUUID()
+        val functionWithArg = JSFunctionWithArg<Any?>(this, functionUUID)
+        functionBindingMap[functionUUID] = JSFunctionPhantomReference(functionWithArg, referenceQueue, functionUUID, functionBinding)
         promise.then {
             val answer = if (it is Unit) {
                 Answer(hasError = false, isVoid = true)
             } else {
                 Answer(hasError = false, isVoid = false, value = gson.toJsonTree(it))
             }
-            functionWithArg.call(answer)
+            functionWithArg(answer)
             functionWithArg.close()
         }.catch { err ->
             val answer = Answer(hasError = true, error = Error.create(err))
-            functionWithArg.call(answer)
+            functionWithArg(answer)
             functionWithArg.close()
         }
     }
@@ -198,24 +242,30 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
         else -> parseJsonWithType(jsonElement, kType)
     }
 
-    private fun createJSFunction(jsonElement: JsonElement, kType: KType) = when (kType.kClass()) {
-        JSFunction::class -> JSFunction(this, jsonElement.asLong)
-        JSFunctionWithArg::class -> JSFunctionWithArg<Any?>(this, jsonElement.asLong)
-        JSFunctionWithPromise::class -> {
-            val kClass = kType.arguments.first().let {
-                if (it.variance != KVariance.INVARIANT) error("Unsupported variance!")
-                it.type!!.kClass()
+    private fun createJSFunction(jsonElement: JsonElement, kType: KType) : JSFunctionParent {
+        val functionUUID = UUID.randomUUID()
+        val functionBinding = jsonElement.asLong
+        val jsFunction = when (kType.kClass()) {
+            JSFunction::class -> JSFunction(this, functionUUID)
+            JSFunctionWithArg::class -> JSFunctionWithArg<Any?>(this, functionUUID)
+            JSFunctionWithPromise::class -> {
+                val kClass = kType.arguments.first().let {
+                    if (it.variance != KVariance.INVARIANT) error("Unsupported variance!")
+                    it.type!!.kClass()
+                }
+                JSFunctionWithPromise<Any?>(this, functionUUID, kClass)
             }
-            JSFunctionWithPromise<Any?>(this, jsonElement.asLong, kClass)
-        }
-        JSFunctionWithPromiseAndArg::class -> {
-            val kClass = kType.arguments.last().let {
-                if (it.variance != KVariance.INVARIANT) error("Unsupported variance!")
-                it.type!!.kClass()
+            JSFunctionWithPromiseAndArg::class -> {
+                val kClass = kType.arguments.last().let {
+                    if (it.variance != KVariance.INVARIANT) error("Unsupported variance!")
+                    it.type!!.kClass()
+                }
+                JSFunctionWithPromiseAndArg<Any?, Any?>(this, functionUUID, kClass)
             }
-            JSFunctionWithPromiseAndArg<Any?, Any?>(this, jsonElement.asLong, kClass)
+            else -> error("Unknown function class!")
         }
-        else -> error("Unknown function class!")
+        functionBindingMap[functionUUID] = JSFunctionPhantomReference(jsFunction, referenceQueue, functionUUID, functionBinding)
+        return jsFunction
     }
 
     private fun parseJsonWithType(jsonElement: JsonElement, kType: KType): Any {
@@ -241,7 +291,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
     private fun parseJsonPrimitive(jsonElement: JsonElement, type: KType) = when (type.kClass()) {
         String::class -> jsonElement.asString
-        Char::class -> jsonElement.asCharacter
+        Char::class -> jsonElement.asString[0]
         Number::class -> jsonElement.asNumber
         Short::class -> jsonElement.asShort
         Byte::class -> jsonElement.asByte
@@ -311,6 +361,23 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     private fun executeJavaScript(js: String) = doInMainThread {
         webView.evaluateJavascript(js) { }
     }
+
+    private fun checkJSFunctionReference() {
+        while (!Thread.currentThread().isInterrupted) {
+            try {
+                val jsFunctionPhantomReference = (referenceQueue.remove() as JSFunctionPhantomReference)
+                val functionUUID = jsFunctionPhantomReference.functionUUID
+                synchronized(this) {
+                    if (functionBindingMap.contains(functionUUID)) {
+                        Log.w("InnerBridge", "There is no more reference to this function but the close function is not called!")
+                        removeFunction(functionUUID)
+                    }
+                }
+            } catch (e: InterruptedException) {
+                return
+            }
+        }
+    }
 }
 
 data class Call(val interfaceName: String, val functionName: String, val arguments: List<JsonElement>, val promiseFunctionBinding: Long?)
@@ -324,3 +391,5 @@ data class Error(val message: String?, val stackTrace: String) {
 }
 
 data class JSInterfaceData(val name: String, val jsInterface: JSInterface, val nativeCalls: Map<String, KFunction<*>>)
+
+class JSFunctionPhantomReference(jsFunction: JSFunctionParent, referenceQueue: ReferenceQueue<JSFunctionParent>, val functionUUID: UUID, val functionBinding: Long) : PhantomReference<JSFunctionParent>(jsFunction, referenceQueue)
