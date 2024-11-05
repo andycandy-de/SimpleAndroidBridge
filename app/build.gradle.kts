@@ -25,7 +25,7 @@ android {
             )
         }
         debug {
-            isMinifyEnabled = false // set to true to test the `consumer-proguard-rules.pro` of the lib
+            isMinifyEnabled = false // set to true to test the `consumer-rules.pro` of the lib
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
