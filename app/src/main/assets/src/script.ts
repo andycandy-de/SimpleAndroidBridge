@@ -18,6 +18,10 @@ startApp(() => {
     const text = document.getElementById("text")!
     const reload = document.getElementById("reload")!
     const info = document.getElementById("info")!
+    const sleepTime = (document.getElementById("sleep-time") as HTMLInputElement)!
+    const sleepFullSync = document.getElementById("sleep-full-sync")!
+    const sleepWebPromise = document.getElementById("sleep-web-promise")!
+    const sleepFullPromise = document.getElementById("sleep-full-promise")!
     text.innerHTML = ""
 
     const appendText = (s: string) => {
@@ -35,6 +39,26 @@ startApp(() => {
 
     // define the interface as const
     const android = bridge.interfaces.Android
+
+    sleepFullSync.addEventListener("click", () => {
+        const sleepTimeVal = parseInt(sleepTime.value, 10)
+        const result = android.longRunningTaskFullSync(sleepTimeVal)
+        appendText(result)
+    })
+
+    sleepWebPromise.addEventListener("click", () => {
+        const sleepTimeVal = parseInt(sleepTime.value, 10)
+        android.longRunningTaskWebPromise(sleepTimeVal).then((result) => {
+            appendText(result)
+        })
+    })
+
+    sleepFullPromise.addEventListener("click", () => {
+        const sleepTimeVal = parseInt(sleepTime.value, 10)
+        android.longRunningTaskFullPromise(sleepTimeVal).then((result) => {
+            appendText(result)
+        })
+    })
 
     // call different native call types
     appendText(android.helloFullSync("Web"))
@@ -72,6 +96,9 @@ interface AndroidInterface {
     helloFullSync(name: string): string
     helloWebPromise(name: string): Promise<string>
     helloFullPromise(name: string): Promise<string>
+    longRunningTaskFullSync(sleepTimeInSec: number): string
+    longRunningTaskWebPromise(sleepTimeInSec: number): Promise<string>
+    longRunningTaskFullPromise(sleepTimeInSec: number): Promise<string>
     registerJSFunctionWithArg(f: JSFunctionWithArg<number>): void
     registerFunctionWithPromise(f: JSFunctionWithPromise<number>): void
     registerFunctionWithPromiseAndArg(f: JSFunctionWithPromiseAndArg<Add, number>): void

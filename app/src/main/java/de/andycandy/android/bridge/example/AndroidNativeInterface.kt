@@ -20,6 +20,21 @@ class AndroidNativeInterface(private val mainActivity: MainActivity): DefaultJSI
         promise.resolve("Hello $name FullPromise from Thread ${Thread.currentThread().name}")
     }
 
+    override fun longRunningTaskFullSync(sleepTimeInSec: Int): String {
+        Thread.sleep(sleepTimeInSec.toLong() * 1000)
+        return "${Thread.currentThread().name} finished the task after ${sleepTimeInSec}s!"
+    }
+
+    override fun longRunningTaskWebPromise(sleepTimeInSec: Int): String {
+        Thread.sleep(sleepTimeInSec.toLong() * 1000)
+        return "${Thread.currentThread().name} finished the task after ${sleepTimeInSec}s!"
+    }
+
+    override fun longRunningTaskFullPromise(sleepTimeInSec: Int) = doInBackground<String> { promise ->
+        Thread.sleep(sleepTimeInSec.toLong() * 1000)
+        promise.resolve("${Thread.currentThread().name} finished the task after ${sleepTimeInSec}s!")
+    }
+
     override fun registerJSFunctionWithArg(function: JSFunctionWithArg<Int>) {
         mainActivity.registerFunctionToButton1(function)
     }

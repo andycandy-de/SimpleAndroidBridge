@@ -15,6 +15,10 @@ startApp(function () {
     var text = document.getElementById("text");
     var reload = document.getElementById("reload");
     var info = document.getElementById("info");
+    var sleepTime = document.getElementById("sleep-time");
+    var sleepFullSync = document.getElementById("sleep-full-sync");
+    var sleepWebPromise = document.getElementById("sleep-web-promise");
+    var sleepFullPromise = document.getElementById("sleep-full-promise");
     text.innerHTML = "";
     var appendText = function (s) {
         text.innerHTML = "".concat(text.innerHTML, "</br>").concat(s);
@@ -28,6 +32,23 @@ startApp(function () {
     reload.addEventListener("click", function () { window.location.reload(); });
     // define the interface as const
     var android = bridge.interfaces.Android;
+    sleepFullSync.addEventListener("click", function () {
+        var sleepTimeVal = parseInt(sleepTime.value, 10);
+        var result = android.longRunningTaskFullSync(sleepTimeVal);
+        appendText(result);
+    });
+    sleepWebPromise.addEventListener("click", function () {
+        var sleepTimeVal = parseInt(sleepTime.value, 10);
+        android.longRunningTaskWebPromise(sleepTimeVal).then(function (result) {
+            appendText(result);
+        });
+    });
+    sleepFullPromise.addEventListener("click", function () {
+        var sleepTimeVal = parseInt(sleepTime.value, 10);
+        android.longRunningTaskFullPromise(sleepTimeVal).then(function (result) {
+            appendText(result);
+        });
+    });
     // call different native call types
     appendText(android.helloFullSync("Web"));
     android.helloWebPromise("Web").then(function (s) { appendText(s); });

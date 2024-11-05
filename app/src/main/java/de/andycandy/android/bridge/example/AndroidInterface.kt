@@ -20,6 +20,15 @@ interface AndroidInterface {
     fun helloFullPromise(name: String): Promise<String>
 
     @NativeCall(CallType.FULL_SYNC)
+    fun longRunningTaskFullSync(sleepTimeInSec: Int): String
+
+    @NativeCall(CallType.WEB_PROMISE)
+    fun longRunningTaskWebPromise(sleepTimeInSec: Int): String
+
+    @NativeCall(CallType.FULL_PROMISE)
+    fun longRunningTaskFullPromise(sleepTimeInSec: Int): Promise<String>
+
+    @NativeCall(CallType.FULL_SYNC)
     fun registerJSFunctionWithArg(function: JSFunctionWithArg<Int>)
 
     @NativeCall(CallType.FULL_SYNC)
