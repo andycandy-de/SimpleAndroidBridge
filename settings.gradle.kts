@@ -21,4 +21,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "SimpleAndroidBridgeExample"
 include(":app")
-include(":SimpleAndoirdBridgeLib")
+include(":SimpleAndroidBridgeLib")

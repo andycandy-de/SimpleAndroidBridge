@@ -40,21 +40,21 @@ class JSFunctionWithArg<A>(innerBridge: InnerBridge, functionUUID: UUID) : JSFun
     operator fun invoke (arg: A) = call(arg)
 }
 
-class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionUUID: UUID, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
+class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionUUID: UUID, private val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
 
     fun call(): Promise<R> {
         checkClosed()
-        return innerBridge.callJSFunctionWithPromise(functionUUID, this)
+        return innerBridge.callJSFunctionWithPromise(functionUUID, kClass)
     }
 
     operator fun invoke() = call()
 }
 
-class JSFunctionWithPromiseAndArg<A, R>(innerBridge: InnerBridge, functionUUID: UUID, val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
+class JSFunctionWithPromiseAndArg<A, R>(innerBridge: InnerBridge, functionUUID: UUID, private val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
 
     fun call(arg: A): Promise<R> {
         checkClosed()
-        return innerBridge.callJSFunctionWithPromise(functionUUID, this, arg)
+        return innerBridge.callJSFunctionWithPromise(functionUUID, kClass, arg)
     }
 
     operator fun invoke(arg: A) = call(arg)

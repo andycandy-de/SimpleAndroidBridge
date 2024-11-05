@@ -79,7 +79,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     @JavascriptInterface
     fun nativeCall(callAsString: String): String {
         try {
-            val call = gson.fromJson<Call>(callAsString, Call::class.java)
+            val call = gson.fromJson(callAsString, Call::class.java)
             val jsInterfaceData = findInterfaceData(call.interfaceName)
             val kFunction = findInterfaceFunction(jsInterfaceData, call.functionName)
             val args = listOf(jsInterfaceData.jsInterface) + createArgList(call, kFunction)
@@ -155,25 +155,25 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
         }
     }
 
-    fun <R> callJSFunctionWithPromise(functionUUID: UUID, jsFunctionWithPromise: JSFunctionWithPromise<R>) : Promise<R> {
+    fun <R> callJSFunctionWithPromise(functionUUID: UUID, kClass: KClass<*>) : Promise<R> {
         synchronized(this) {
             val functionBinding = functionBindingMap[functionUUID]?.functionBinding
                 ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
             val promise = Promise<R>()
             val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-            pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
+            pendingPromises[pendingPromiseID] = Pair(promise, kClass)
             executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID})")
             return promise
         }
     }
 
-    fun <A, R> callJSFunctionWithPromise(functionUUID: UUID, jsFunctionWithPromise: JSFunctionWithPromiseAndArg<A, R>, arg: A): Promise<R> {
+    fun <A, R> callJSFunctionWithPromise(functionUUID: UUID, kClass: KClass<*>, arg: A): Promise<R> {
         synchronized(this) {
             val functionBinding = functionBindingMap[functionUUID]?.functionBinding
                 ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
             val promise = Promise<R>()
             val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-            pendingPromises[pendingPromiseID] = Pair(promise, jsFunctionWithPromise.kClass)
+            pendingPromises[pendingPromiseID] = Pair(promise, kClass)
             executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID},${gson.toJson(arg)})")
             return promise
         }
