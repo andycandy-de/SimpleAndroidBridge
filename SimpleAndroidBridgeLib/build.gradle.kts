@@ -65,7 +65,7 @@ mavenPublishing {
 
     pom {
         name.set("simple-android-bridge")
-        description.set("Build a bridge! This library is created to create a powerful interface between Android and Webapp.")
+        description.set("Build a bridge! Seamless Integration between Android and Webapps")
         url.set("https://github.com/andycandy-de/SimpleAndroidBridge")
         licenses {
             license {
