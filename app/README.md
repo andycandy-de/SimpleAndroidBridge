@@ -1,7 +1,7 @@
 SimpleAndroidBridge Example App
 ================================
 
-This example application demonstrates the usage of the SimpleAndroidBridge library, showcasing its capabilities and features. The app consists of a WebView and some native inputs and buttons below.
+This example application demonstrates the usage of the SimpleAndroidBridge library, showcasing its capabilities and features. The app consists of a WebView and some native inputs and buttons below. The web code is written in TypeScript, compiled to JavaScript, and then committed to the app's assets folder.
 
 ### NativeCall Types
 
