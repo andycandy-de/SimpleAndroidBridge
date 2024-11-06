@@ -1,6 +1,8 @@
 # SimpleAndroidBridge
 
-Build a bridge! This library is created to create a powerful interface between Android and Webapp. You can render the Webapp in an Android webview. Create a JSInterface to access the Android layer from the Webapp. You can also call web functions from the android layer.
+Build a bridge! Seamless Integration between Android and Webapps
+
+Effortlessly build a robust bridge between your Android and Webapp with the SimpleAndroidBridge library. This library allows you to render a web application in an Android WebView and create a JSInterface to enable smooth communication between the two platforms. Share complex objects, promises, and callback functions, all while your web application remains responsive and efficient.
 
 ✓ Share Objects - Android ⇄ Web
 
@@ -14,9 +16,9 @@ Build a bridge! This library is created to create a powerful interface between A
 
 ## Features
 
-### Share Objects
+### Share Complex Objects with Ease
 
-The javascript bridge which is built in the android sdk just accepts primitive types. That is not enogth? This librabry allows you to share complex objects between web and android. Just define the types as arguments or return in the android native functions. This library automatically converts a javascript object to a kotlin object and vice versa.
+The built-in JavaScript bridge in the Android SDK only supports primitive types. With SimpleAndroidBridge, you can share complex objects between Android and web with ease. Simply define the types as arguments or return values in your Android native functions, and the library will automatically convert JavaScript objects to Kotlin objects and vice versa.
 
 ```kotlin
 // Kotlin
@@ -38,9 +40,9 @@ data class Contact(val surname: String? = null, val fistname: String? = null,
 console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 ```
 
-### Share Promise
+### Promises Made Easy
 
-The javascript bridge which is built in the android sdk executes all functions in a blocking way. The webapp is fully blocked until the native function returns. With this library you can define a Promise return type. With the 'doInBackground' function the android code is executed in a background thread and the webapp is not blocked.
+The JavaScript bridge in the Android SDK executes functions in a blocking manner, causing the web application to freeze until the native function returns. However, with this library, you can define a Promise return type, allowing for non-blocking execution. By utilizing the 'doInBackground' function, the Android code is executed in a background thread, preventing the web application from being blocked.
 
 ```kotlin
 // Kotlin
@@ -70,8 +72,7 @@ Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
 
 ### Callback Functions
 
-If you know Javascript, you also know callback functions. With this Library you can
-inject javascript callback functions into the Android layer.
+If you're familiar with JavaScript, you're likely no stranger to callback functions. SimpleAndroidBridge takes this concept a step further, allowing you to inject these JavaScript callback functions directly into the Android layer, thereby creating a seamless interaction between your web application and Android.
 
 ```kotlin
 // Kotlin
@@ -91,8 +92,7 @@ Bridge.interfaces.Android.registerOnClickAction(() => {
 })
 ```
 
-You want to pass an argument to a Javascript function. Just use the type JSFunctionWithArg
-which accepts an argument.
+To pass an argument to a JavaScript function, use the `JSFunctionWithArg` type, which is specifically designed to accept an argument.
 
 ```kotlin
 // Kotlin
@@ -114,10 +114,9 @@ Bridge.interfaces.Android.registerOnClickAction((i) => {
 })
 ```
 
-To pass more than one argument to a function you can create a data class.
+To pass multiple arguments to a function, consider creating a data class.
 
-There are also function which can pass a result to the Android layer. Just use the class
-JSFunctionWithPromise or JSFunctionWithPromiseAndArg.
+For functions that need to return a result to the Android layer, you can use either `JSFunctionWithPromise` for functions without arguments or `JSFunctionWithPromiseAndArg` for functions that accept an argument.
 
 ```kotlin
 // Kotlin
@@ -147,8 +146,12 @@ Bridge.interfaces.Android.registerOnClickAction((add) => {
 ---
 **NOTE**
 
-The resolve and reject of a Promise from a JSFunctionWithPromise is executed in a background thread.
-If you don't want to call the JSFunction anymore just call the function 'close' to clear the function binding.
+To release a `JSFunction` and clear its binding, simply call the `close` function. `JSFunction` implements the `AutoCloseable` interface, enabling you to utilize try-with-resources or `AutoCloseable.use {}` blocks to automatically manage the function's lifecycle and ensure proper cleanup.
+```kotlin
+function.use { it() }
+```
+
+Additionally, if your web application or WebView supports reloading, it's recommended to add an AfterInitializeListener to the Bridge. This listener will help release any available `JSFunctions`, ensuring a clean state after initialization.
 
 ---
 
@@ -158,7 +161,7 @@ This library supports different native call types which let you decide how to ca
 
 #### Full sync
 
-The call type `CallType.FULL_SYNC` calls the native code in a blocking way. The javascript execution waits until the native android function returns. The drawback is the the web view doesn't interact until the native execution terminates. *(Not recommended for long running tasks)*
+The `CallType.FULL_SYNC` call type invokes native code in a blocking manner, causing JavaScript execution to pause until the native Android function returns. As a result, the web view remains unresponsive until the native execution is complete. *(Not recommended for long-running tasks)*
 
 ```kotlin
 // Kotlin
@@ -175,7 +178,7 @@ console.log(Bridge.interfaces.Android.searchContact({surname: "Pitt"}))
 
 #### Web promise
 
-The call type `CallType.WEB_PROMISE` works exactly like the **Full sync** call does. The difference is that the return of the javascript call is a promise. But the native android function is still called in a blocking way. *(Recommended if you are unsure about duration and you might need to migrate to FULL_PROMISE)*
+The `CallType.WEB_PROMISE` call type functions similarly to the `FULL_SYNC` call, with the key difference being that the JavaScript call returns a promise. However, the native Android function is still invoked in a blocking manner. *(Recommended if you're uncertain about the task duration and may need to migrate to `FULL_PROMISE` in the future)*
 
 ```kotlin
 // Kotlin
@@ -194,7 +197,7 @@ Bridge.interfaces.Android.searchContact({surname: "Pitt"}).then((list) => {
 
 #### Full promise
 
-The call type `CallType.FULL_PROMISE` allowes you to call the native android code in a background thread. So the javascript execution is not blocked and web view is free to perform its work. *(Recommended for long running tasks)*
+The `CallType.FULL_PROMISE` call type enables you to execute native Android code in a background thread, allowing JavaScript execution to continue uninterrupted. As a result, the web view remains responsive and free to perform its tasks. *(Recommended for long-running tasks)*
 
 ```kotlin
 // Kotlin
@@ -311,6 +314,8 @@ console.log(Bridge.interfaces.Android.helloFullSync("Web"))
 
 MIT License
 
+Copyright (c) 2020 andycandy-de<br>
+Copyright (c) 2021 andycandy-de<br>
 Copyright (c) 2024 andycandy-de
 
 Permission is hereby granted, free of charge, to any person obtaining a copy

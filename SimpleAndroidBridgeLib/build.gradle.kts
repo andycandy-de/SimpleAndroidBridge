@@ -70,8 +70,7 @@ mavenPublishing {
         licenses {
             license {
                 name.set("The MIT License (MIT)")
-                url.set("https://mit-license.org/license.txt")
-                distribution.set("https://mit-license.org/license.txt")
+                url.set("https://raw.githubusercontent.com/andycandy-de/SimpleAndroidBridge/refs/heads/development/LICENSE")
             }
         }
         developers {
