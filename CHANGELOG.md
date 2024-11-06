@@ -8,3 +8,4 @@ Changelog for version 1.1.0:
 * Refactored code to improve maintainability, readability, and performance
 * Simplified project structure by removing the SimpleAndroidBridgeLibJS subproject, reducing complexity
 * Added ProGuard consumer rules
+* Changed minSdk to 24 and compileSdk to 35
