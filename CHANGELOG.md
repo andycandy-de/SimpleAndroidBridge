@@ -1,3 +1,7 @@
+Changelog for version 1.1.1:
+
+* Some minor improvements, particularly in how Promises are handled in both native and web
+
 Changelog for version 1.1.0:
 
 * Migrated Gradle DSL from Groovy to Kotlin

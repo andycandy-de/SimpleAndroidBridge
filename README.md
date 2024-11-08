@@ -80,7 +80,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
 
     @NativeCall(CallType.FULL_SYNC)
     fun registerOnClickAction(jsFunction: JSFunction) {
-        button.setOnClickListener { jsFunction.call() }
+        button.setOnClickListener { jsFunction() }
     }
 }
 ```
@@ -102,7 +102,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
     
     @NativeCall(CallType.FULL_SYNC)
     fun registerOnClickAction(jsFunction: JSFunctionWithArg<Int>) {
-        button.setOnClickListener { jsFunction.call(++i) }
+        button.setOnClickListener { jsFunction(++i) }
     }
 }
 ```
@@ -126,7 +126,7 @@ class AndroidNativeInterface(val button: Button): DefaultJSInterface("Android") 
     fun registerOnClickAction(jsFunction: JSFunctionWithPromiseAndArg<Add, Int>) {
         button.setOnClickListener {
             val add = Add((Math.random() * 10).toInt(), (Math.random() * 10).toInt())
-            jsFunction.call(add)
+            jsFunction(add)
                 .then{ Log.d("AndroidNativeInterface", "Web calculated: ${add.a} + ${add.b} = $it") }
                 .catch{ Log.e("AndroidNativeInterface", "ERROR IN WEB LAYER: $it") }
         }
@@ -233,7 +233,7 @@ repositories {
 Add the library to the dependencies block.
 ```gradle
 dependencies {
-    implementation 'com.github.andycandy-de:simple-android-bridge:1.1.0'
+    implementation 'com.github.andycandy-de:simple-android-bridge:1.1.1'
 }
 ```
 
