@@ -44,9 +44,9 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
     private val gson = Gson()
 
-    private val interfaces = mutableMapOf<String, JSInterfaceData>()
+    private val interfaces = Collections.synchronizedMap(mutableMapOf<String, JSInterfaceData>())
 
-    private val pendingPromises = mutableMapOf<Long, Pair<Promise<*>, KClass<*>>>()
+    private val pendingPromises = Collections.synchronizedMap(mutableMapOf<Long, Pair<Promise<*>, KClass<*>>>())
 
     private val currentPendingPromiseID: AtomicLong = AtomicLong(0)
 
@@ -67,12 +67,14 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     @JavascriptInterface
     fun init() {
         val initScript = readInitScript()
-        executeJavaScript(initScript + ";initBridge(${name},${createInterfacesJS()});")
+        executeJavaScript(initScript + "; initBridge(${name},${createInterfacesJS()});")
     }
 
     @JavascriptInterface
     fun nativeAfterInitialize() {
+        pendingPromises.clear()
         functionBindingMap.clear()
+        currentPendingPromiseID.set(0)
         afterInitializeListeners.toList().forEach(Runnable::run)
     }
 
@@ -103,11 +105,8 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     @JavascriptInterface
     fun finishPromise(promiseBinding: Long, answerAsString: String) {
         val answer = gson.fromJson(answerAsString, Answer::class.java)
-        val promisePair = synchronized(this) {
-            val p = pendingPromises[promiseBinding]
-            pendingPromises.remove(promiseBinding)
-            return@synchronized p!!
-        }
+        val promisePair = pendingPromises[promiseBinding]!!
+        pendingPromises.remove(promiseBinding)
 
         @Suppress("UNCHECKED_CAST")
         val promise = promisePair.first as Promise<Any?>
@@ -115,11 +114,16 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
         doInMainThread {
             when {
-                answer.hasError -> promise.reject(Exception("${answer.error?.message} ${answer.error?.stackTrace}"))
+                answer.hasError -> promise.reject(Exception("${answer.error?.message}${answer.error?.let { " ${it.stackTrace}" }}"))
                 kClass == Unit::class -> promise.resolve(Unit)
                 else -> promise.resolve(gson.fromJson(answer.value, kClass.java))
             }
         }
+    }
+
+    @JavascriptInterface
+    fun releaseDeadPromise(promiseBinding: Long) {
+        pendingPromises.remove(promiseBinding)
     }
 
     fun addAfterInitializeListener(block: () -> Unit) {
@@ -129,54 +133,44 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     fun addJSInterface(jsInterface: JSInterface) {
         val nativeCalls = findAndMapNativeCalls(jsInterface)
         interfaces[jsInterface.name] = JSInterfaceData(jsInterface.name, jsInterface, nativeCalls)
-        executeJavaScript("if (${name}.initialized) {${name}.interfaces=${createInterfacesJS()}}")
+        executeJavaScript("if (${name}.initialized) { ${name}.interfaces=${createInterfacesJS()}; }")
     }
 
     fun removeFunction(functionUUID: UUID) {
-        synchronized(this) {
-            val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: return@synchronized
-            executeJavaScript("${name}.removeFunction(${functionBinding})")
-            functionBindingMap.remove(functionUUID)
-        }
+        val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: return
+        executeJavaScript("${name}.removeFunction(${functionBinding});")
+        functionBindingMap.remove(functionUUID)
     }
 
     fun callJSFunction(functionUUID: UUID) {
-        synchronized(this) {
-            val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
-            executeJavaScript("${name}.executeFunction(${functionBinding})")
-        }
+        val functionBinding = functionBindingMap[functionUUID]?.functionBinding ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+        executeJavaScript("${name}.executeFunction(${functionBinding});")
     }
 
     fun <A> callJSFunction(functionUUID: UUID, arg: A) {
-        synchronized(this) {
-            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
-                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
-            executeJavaScript("${name}.executeFunction(${functionBinding},${gson.toJson(arg)})")
-        }
+        val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+            ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+        executeJavaScript("${name}.executeFunction(${functionBinding},${gson.toJson(arg)});")
     }
 
     fun <R> callJSFunctionWithPromise(functionUUID: UUID, kClass: KClass<*>) : Promise<R> {
-        synchronized(this) {
-            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
-                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
-            val promise = Promise<R>()
-            val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-            pendingPromises[pendingPromiseID] = Pair(promise, kClass)
-            executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID})")
-            return promise
-        }
+        val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+            ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+        val promise = Promise<R>()
+        val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
+        pendingPromises[pendingPromiseID] = Pair(promise, kClass)
+        executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID});")
+        return promise
     }
 
     fun <A, R> callJSFunctionWithPromise(functionUUID: UUID, kClass: KClass<*>, arg: A): Promise<R> {
-        synchronized(this) {
-            val functionBinding = functionBindingMap[functionUUID]?.functionBinding
-                ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
-            val promise = Promise<R>()
-            val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
-            pendingPromises[pendingPromiseID] = Pair(promise, kClass)
-            executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID},${gson.toJson(arg)})")
-            return promise
-        }
+        val functionBinding = functionBindingMap[functionUUID]?.functionBinding
+            ?: error("Functionbinding is not available. This happens when the Bridge was reinitialized!")
+        val promise = Promise<R>()
+        val pendingPromiseID = currentPendingPromiseID.getAndIncrement()
+        pendingPromises[pendingPromiseID] = Pair(promise, kClass)
+        executeJavaScript("${name}.executeFunctionWithPromiseBinding(${functionBinding},${pendingPromiseID},${gson.toJson(arg)});")
+        return promise
     }
 
     private fun handlePromise(promise: Promise<*>, call: Call) {

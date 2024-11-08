@@ -79,12 +79,6 @@ class Promise<R> {
         }
     }
 
-    fun finalize() {
-        if (state == State.PENDING) {
-            Log.w("Promise", "Promise is not resolved or rejected!")
-        }
-    }
-
     private interface Callable<T>{
         fun call(t: T)
     }

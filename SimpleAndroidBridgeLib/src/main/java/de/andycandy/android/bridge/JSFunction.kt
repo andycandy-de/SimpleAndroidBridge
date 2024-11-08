@@ -11,18 +11,16 @@ open class JSFunctionParent(protected val innerBridge: InnerBridge, protected va
         if (closed) error("Function is already closed!")
     }
 
-    override fun close() {
-        synchronized(this) {
-            checkClosed()
-            closed = true
-        }
+    override fun close() = synchronized(this) {
+        checkClosed()
+        closed = true
         innerBridge.removeFunction(functionUUID)
     }
 }
 
 class JSFunction(innerBridge: InnerBridge, functionUUID: UUID) : JSFunctionParent(innerBridge, functionUUID) {
 
-    fun call() {
+    fun call() = synchronized(this) {
         checkClosed()
         innerBridge.callJSFunction(functionUUID)
     }
@@ -32,7 +30,7 @@ class JSFunction(innerBridge: InnerBridge, functionUUID: UUID) : JSFunctionParen
 
 class JSFunctionWithArg<A>(innerBridge: InnerBridge, functionUUID: UUID) : JSFunctionParent(innerBridge, functionUUID) {
 
-    fun call(arg: A) {
+    fun call(arg: A) = synchronized(this) {
         checkClosed()
         innerBridge.callJSFunction(functionUUID, arg)
     }
@@ -42,7 +40,7 @@ class JSFunctionWithArg<A>(innerBridge: InnerBridge, functionUUID: UUID) : JSFun
 
 class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionUUID: UUID, private val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
 
-    fun call(): Promise<R> {
+    fun call(): Promise<R> = synchronized(this) {
         checkClosed()
         return innerBridge.callJSFunctionWithPromise(functionUUID, kClass)
     }
@@ -52,7 +50,7 @@ class JSFunctionWithPromise<R>(innerBridge: InnerBridge, functionUUID: UUID, pri
 
 class JSFunctionWithPromiseAndArg<A, R>(innerBridge: InnerBridge, functionUUID: UUID, private val kClass: KClass<*>) : JSFunctionParent(innerBridge, functionUUID) {
 
-    fun call(arg: A): Promise<R> {
+    fun call(arg: A): Promise<R> = synchronized(this) {
         checkClosed()
         return innerBridge.callJSFunctionWithPromise(functionUUID, kClass, arg)
     }

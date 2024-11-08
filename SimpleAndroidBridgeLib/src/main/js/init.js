@@ -23,7 +23,31 @@ const initBridge = (bridge, interfaces) => {
         }
     }
 
+    class FinalizationRegistryWrapper {
+
+        constructor(callbackFn) {
+            if (typeof FinalizationRegistry !== "undefined") {
+                this.registry = new FinalizationRegistry(callbackFn);
+            }
+        }
+
+        register(target, heldValue, unregisterToken) {
+            if(typeof this.registry !== "undefined") {
+                return this.registry.register(target, heldValue, unregisterToken);
+            }
+        }
+
+        unregister(unregisterToken) {
+            if(typeof this.registry !== "undefined") {
+                return this.registry.unregister(unregisterToken);
+            }
+        }
+    }
+
     // enrich bridge
+    const promiseFinalizationRegistry = new FinalizationRegistryWrapper((promiseBinding) => {
+        bridge.releaseDeadPromise(promiseBinding);
+    });
     const functionBindings = [];
     let currentFunctionBinding = 0;
 
@@ -54,14 +78,24 @@ const initBridge = (bridge, interfaces) => {
     bridge.executeFunctionWithPromiseBinding = (functionBinding, promiseBinding, arg) => {
         const f = bridge.getFunction(functionBinding);
         setTimeout(() => {
-            const promise = f(arg);
-            promise.then((ret) => {
-                const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret };
+            try {
+                const promise = f(arg);
+                promiseFinalizationRegistry.register(promise, promiseBinding, promise);
+                promise.then((ret) => {
+                    const answer = { hasError: false, isVoid: typeof ret === "undefined", value: ret };
+                    bridge.finishPromise(promiseBinding, JSON.stringify(answer));
+                    promiseFinalizationRegistry.unregister(promise);
+                }).catch((err) => {
+                    const answer = { hasError: true, error: { message: err.toString(), stackTrace: err.stack } };
+                    bridge.finishPromise(promiseBinding, JSON.stringify(answer));
+                    promiseFinalizationRegistry.unregister(promise);
+                });
+            } catch (err) {
+                const answer = { hasError: true, error: { message: `Unable to get a Promise! function: ${f.toString
+                ()} error: ${err.toString()}` } };
                 bridge.finishPromise(promiseBinding, JSON.stringify(answer));
-            }).catch((err) => {
-                const answer = { hasError: true, error: { message: err.toString(), stackTrace: err.stack } };
-                bridge.finishPromise(promiseBinding, JSON.stringify(answer));
-            });
+                promiseFinalizationRegistry.unregister(promise);
+            }
         });
     };
 
