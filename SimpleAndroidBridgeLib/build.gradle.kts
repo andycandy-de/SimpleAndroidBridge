@@ -1,5 +1,3 @@
-import com.vanniktech.maven.publish.SonatypeHost
-
 plugins {
     alias(libs.plugins.android.library)
     alias(libs.plugins.kotlin.android)
@@ -59,9 +57,9 @@ tasks {
 }
 
 mavenPublishing {
-    publishToMavenCentral(SonatypeHost.DEFAULT)
+    publishToMavenCentral()
 
-    coordinates("com.github.andycandy-de", "simple-android-bridge", "1.1.1")
+    coordinates("com.github.andycandy-de", "simple-android-bridge", "1.1.2")
 
     pom {
         name.set("simple-android-bridge")

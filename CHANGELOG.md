@@ -1,3 +1,7 @@
+Changelog for version 1.1.2:
+
+* Minimum SDK version changed to 21
+
 Changelog for version 1.1.1:
 
 * Some minor improvements, particularly in how Promises are handled in both native and web

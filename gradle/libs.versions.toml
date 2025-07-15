@@ -10,7 +10,7 @@ composeBom = "2024.04.01"
 webkit = "1.12.1"
 appcompat = "1.7.0"
 jsgradlecompiler = "0.3.0"
-mavenpublish = "0.30.0"
+mavenpublish = "0.34.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
