@@ -265,7 +265,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
 
     private fun parseJsonEnumWithType(jsonElement: JsonElement, kType: KType): Any {
         val stringVal = jsonElement.asString
-        val enum = kType.kClass().java.enumConstants
+        val enum = kType.kClass().java.enumConstants!!
             .map { it as Enum<*> }
             .find { it.name == stringVal }
 
