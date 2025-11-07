@@ -60,6 +60,13 @@ startApp(() => {
         })
     })
 
+    // call native with enum
+    const number = 3685
+    appendText(`Convert ${number} to different numeral systems.`)
+    appendText(`BIN = ${android.toNumSystem(number, NumSystem.BIN)}`)
+    appendText(`OCT = ${android.toNumSystem(number, NumSystem.OCT)}`)
+    appendText(`HEX = ${android.toNumSystem(number, NumSystem.HEX)}`)
+
     // call different native call types
     appendText(android.helloFullSync("Web"))
     android.helloWebPromise("Web").then((s) => { appendText(s) })
@@ -103,6 +110,7 @@ interface AndroidInterface {
     registerFunctionWithPromise(f: JSFunctionWithPromise<number>): void
     registerFunctionWithPromiseAndArg(f: JSFunctionWithPromiseAndArg<Add, number>): void
     registerFunction(f: JSFunction): void
+    toNumSystem(number: number, numSystem: NumSystem): string
 }
 
 interface Add {
@@ -132,4 +140,10 @@ interface Bridge {
     afterInitialize: () => void
     interfaces: {Android: AndroidInterface}
     getFunctionBinding: () => number[]
+}
+
+enum NumSystem {
+    BIN = "BIN",
+    OCT = "OCT",
+    HEX = "HEX",
 }

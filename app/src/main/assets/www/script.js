@@ -49,6 +49,12 @@ startApp(function () {
             appendText(result);
         });
     });
+    // call native with enum
+    var number = 3685;
+    appendText("Convert ".concat(number, " to different numeral systems."));
+    appendText("BIN = ".concat(android.toNumSystem(number, NumSystem.BIN)));
+    appendText("OCT = ".concat(android.toNumSystem(number, NumSystem.OCT)));
+    appendText("HEX = ".concat(android.toNumSystem(number, NumSystem.HEX)));
     // call different native call types
     appendText(android.helloFullSync("Web"));
     android.helloWebPromise("Web").then(function (s) { appendText(s); });
@@ -74,3 +80,9 @@ startApp(function () {
         appendText("Function binding demo is available!");
     });
 });
+var NumSystem;
+(function (NumSystem) {
+    NumSystem["BIN"] = "BIN";
+    NumSystem["OCT"] = "OCT";
+    NumSystem["HEX"] = "HEX";
+})(NumSystem || (NumSystem = {}));

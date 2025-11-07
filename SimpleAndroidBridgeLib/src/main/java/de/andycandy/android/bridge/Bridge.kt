@@ -232,6 +232,7 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
     private fun parseFromJson(jsonElement: JsonElement, kType: KType) = when {
         JSFunctionParent::class.isSuperclassOf(kType.kClass()) -> createJSFunction(jsonElement, kType)
         jsonElement.isJsonNull -> null
+        Enum::class.isSuperclassOf(kType.kClass()) -> parseJsonEnumWithType(jsonElement, kType)
         jsonElement.isJsonPrimitive -> parseJsonPrimitive(jsonElement, kType)
         else -> parseJsonWithType(jsonElement, kType)
     }
@@ -260,6 +261,17 @@ class InnerBridge(private val context: Context, private val webView: WebView, pr
         }
         functionBindingMap[functionUUID] = JSFunctionPhantomReference(jsFunction, referenceQueue, functionUUID, functionBinding)
         return jsFunction
+    }
+
+    private fun parseJsonEnumWithType(jsonElement: JsonElement, kType: KType): Any {
+        val stringVal = jsonElement.asString
+        val enum = kType.kClass().java.enumConstants
+            .map { it as Enum<*> }
+            .find { it.name == stringVal }
+
+        enum ?: error("Unknown enum constant $stringVal for class ${kType.kClass().simpleName}!")
+
+        return enum
     }
 
     private fun parseJsonWithType(jsonElement: JsonElement, kType: KType): Any {

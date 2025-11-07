@@ -39,6 +39,32 @@ interface AndroidInterface {
 
     @NativeCall(CallType.FULL_SYNC)
     fun registerFunction(function: JSFunction)
+
+    @NativeCall(CallType.FULL_SYNC)
+    fun toNumSystem(number: Int, numSystem: NumSystem): String
 }
 
 data class Add(val a: Int, val b: Int)
+
+enum class NumSystem(val base: Int) {
+
+    BIN(2),
+    OCT(8),
+    HEX(16);
+
+    fun convert(value: Int): String {
+        var current = value
+        var result = ""
+        while (current != 0) {
+            result = "${toChar(current % base)}$result"
+            current /= base
+        }
+        return result.ifEmpty { "0" }
+    }
+
+    private fun toChar(value: Int) = if (value < 10) {
+       '0' + value
+    } else {
+       'A' + value - 10
+    }
+}

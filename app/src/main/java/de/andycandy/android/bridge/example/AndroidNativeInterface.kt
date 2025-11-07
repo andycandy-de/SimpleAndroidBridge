@@ -50,4 +50,8 @@ class AndroidNativeInterface(private val mainActivity: MainActivity): DefaultJSI
     override fun registerFunction(function: JSFunction) {
         mainActivity.registerFunctionToButton4(function)
     }
+
+    override fun toNumSystem(number: Int, numSystem: NumSystem): String {
+        return numSystem.convert(number)
+    }
 }
