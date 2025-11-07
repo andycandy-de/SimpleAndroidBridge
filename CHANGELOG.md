@@ -1,3 +1,7 @@
+Changelog for version 1.1.3:
+
+* Enum arguments for NativeCall implemented
+
 Changelog for version 1.1.2:
 
 * Minimum SDK version changed to 21

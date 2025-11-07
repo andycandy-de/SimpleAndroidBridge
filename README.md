@@ -233,7 +233,7 @@ repositories {
 Add the library to the dependencies block.
 ```gradle
 dependencies {
-    implementation 'com.github.andycandy-de:simple-android-bridge:1.1.2'
+    implementation 'com.github.andycandy-de:simple-android-bridge:1.1.3'
 }
 ```
 

@@ -59,7 +59,7 @@ tasks {
 mavenPublishing {
     publishToMavenCentral()
 
-    coordinates("com.github.andycandy-de", "simple-android-bridge", "1.1.2")
+    coordinates("com.github.andycandy-de", "simple-android-bridge", "1.1.3")
 
     pom {
         name.set("simple-android-bridge")
